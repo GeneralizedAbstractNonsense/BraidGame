@@ -2,7 +2,7 @@ function initDice3D() {
   const container = document.getElementById('dice-canvas-container');
   
   if (!container) {
-    console.error("[Dice 3D] Errore: Contenitore '#dice-canvas-container' non trovato.");
+    console.error("[Dice 3D] Error: Container '#dice-canvas-container' not found.");
     return;
   }
 
@@ -50,7 +50,7 @@ function initDice3D() {
         material.needsUpdate = true;
       },
       undefined,
-      (err) => console.warn(`[Dice 3D] Immagine non trovata/CORS: ${path}`)
+      (err) => console.warn(`[Dice 3D] Image not found/CORS: ${path}`)
     );
 
     return material;
@@ -66,14 +66,15 @@ function initDice3D() {
   let rollProgress = 0;
   let startRotation = { x: 0, y: 0, z: 0 };
   let targetRotation = { x: 0, y: 0, z: 0 };
+  let selectedFace = 1;
 
   const faceRotations = [
-    { x: 0, y: -Math.PI / 2, z: 0 }, // Faccia 1 (+X)
-    { x: 0, y: Math.PI / 2, z: 0 },  // Faccia 2 (-X)
-    { x: Math.PI / 2, y: 0, z: 0 },  // Faccia 3 (+Y)
-    { x: -Math.PI / 2, y: 0, z: 0 }, // Faccia 4 (-Y)
-    { x: 0, y: 0, z: 0 },            // Faccia 5 (+Z)
-    { x: 0, y: Math.PI, z: 0 }       // Faccia 6 (-Z)
+    { x: 0, y: -Math.PI / 2, z: 0 }, // Face 1 (+X)
+    { x: 0, y: Math.PI / 2, z: 0 },  // Face 2 (-X)
+    { x: Math.PI / 2, y: 0, z: 0 },  // Face 3 (+Y)
+    { x: -Math.PI / 2, y: 0, z: 0 }, // Face 4 (-Y)
+    { x: 0, y: 0, z: 0 },            // Face 5 (+Z)
+    { x: 0, y: Math.PI, z: 0 }        // Face 6 (-Z)
   ];
 
   function rollDice() {
@@ -83,6 +84,8 @@ function initDice3D() {
     rollProgress = 0;
 
     const randomIndex = Math.floor(Math.random() * 6);
+    selectedFace = randomIndex + 1;
+
     const finalRot = faceRotations[randomIndex];
 
     const extraTurnsX = (Math.floor(Math.random() * 3) + 2) * Math.PI * 2;
@@ -103,7 +106,6 @@ function initDice3D() {
 
   container.addEventListener('click', rollDice);
 
-
   function animate() {
     requestAnimationFrame(animate);
 
@@ -113,6 +115,10 @@ function initDice3D() {
       if (rollProgress >= 1) {
         rollProgress = 1;
         isRolling = false;
+
+        if (typeof updateDiceResult === 'function') {
+          updateDiceResult(selectedFace);
+        }
       }
 
       const ease = 1 - Math.pow(1 - rollProgress, 3);
