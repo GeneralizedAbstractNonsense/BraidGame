@@ -6,31 +6,26 @@ function initDice3D() {
     return;
   }
 
- 
   container.style.pointerEvents = 'auto';
   container.style.cursor = 'pointer';
   container.innerHTML = '';
-
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
   camera.position.set(0, 0, 4.2);
   camera.lookAt(0, 0, 0);
 
-
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setSize(90, 90);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   container.appendChild(renderer.domElement);
 
- 
   const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
   scene.add(ambientLight);
 
   const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
   directionalLight.position.set(5, 10, 7);
   scene.add(directionalLight);
-
 
   const textureLoader = new THREE.TextureLoader();
   const imagePaths = [
@@ -61,21 +56,17 @@ function initDice3D() {
     return material;
   });
 
-
   const geometry = new THREE.BoxGeometry(1.4, 1.4, 1.4);
   const diceMesh = new THREE.Mesh(geometry, materials);
   scene.add(diceMesh);
 
-
   diceMesh.rotation.set(0.5, 0.6, 0);
-
 
   let isRolling = false;
   let rollProgress = 0;
   let startRotation = { x: 0, y: 0, z: 0 };
   let targetRotation = { x: 0, y: 0, z: 0 };
 
-  
   const faceRotations = [
     { x: 0, y: -Math.PI / 2, z: 0 }, // Faccia 1 (+X)
     { x: 0, y: Math.PI / 2, z: 0 },  // Faccia 2 (-X)
@@ -85,18 +76,15 @@ function initDice3D() {
     { x: 0, y: Math.PI, z: 0 }       // Faccia 6 (-Z)
   ];
 
-
   function rollDice() {
     if (isRolling) return;
 
     isRolling = true;
     rollProgress = 0;
 
-    
     const randomIndex = Math.floor(Math.random() * 6);
     const finalRot = faceRotations[randomIndex];
 
-    
     const extraTurnsX = (Math.floor(Math.random() * 3) + 2) * Math.PI * 2;
     const extraTurnsY = (Math.floor(Math.random() * 3) + 2) * Math.PI * 2;
 
@@ -113,10 +101,9 @@ function initDice3D() {
     };
   }
 
- 
   container.addEventListener('click', rollDice);
 
-  /
+
   function animate() {
     requestAnimationFrame(animate);
 
@@ -128,7 +115,6 @@ function initDice3D() {
         isRolling = false;
       }
 
- 
       const ease = 1 - Math.pow(1 - rollProgress, 3);
 
       diceMesh.rotation.x = startRotation.x + (targetRotation.x - startRotation.x) * ease;
@@ -142,4 +128,8 @@ function initDice3D() {
   animate();
 }
 
-document.addEventListener('DOMContentLoaded', initDice3D);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initDice3D);
+} else {
+  initDice3D();
+}
