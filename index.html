@@ -13,14 +13,8 @@
   </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
-  <!-- Importmap per abilitare l'importazione ES Module di Three.js -->
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.js"
-      }
-    }
-  </script>
+  <!-- Three.js CDN Globale -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <style>
     * {
@@ -159,7 +153,6 @@
       min-height: 110px;
     }
 
-    /* Design Carte Migliorato con MathJax */
     .card {
       width: 75px;
       height: 105px;
@@ -181,18 +174,6 @@
     .card:hover {
       transform: translateY(-8px);
       box-shadow: 0 10px 16px rgba(0,0,0,0.5);
-    }
-
-    .card.jolly-card {
-      background: linear-gradient(135deg, #f1c40f, #e67e22);
-      color: #ffffff;
-      border-color: #f39c12;
-      font-weight: bold;
-    }
-
-    .card svg {
-      max-width: 100%;
-      max-height: 100%;
     }
 
     .card-deck {
@@ -222,12 +203,6 @@
       border-radius: 10px;
     }
 
-    .card-deck.empty {
-      background: #718093;
-      border-style: dashed;
-      cursor: default;
-    }
-
     .card-placeholder {
       width: 75px;
       height: 105px;
@@ -241,19 +216,7 @@
       text-align: center;
     }
 
-    .clickable-reshuffle {
-      border: 2px solid #4cd137 !important;
-      animation: pulse 1.5s infinite;
-      cursor: pointer !important;
-    }
-
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(76, 209, 55, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(76, 209, 55, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(76, 209, 55, 0); }
-    }
-
-    /* Modifica Sezione 4 per contenere il canvas Three.js */
+    /* Sezione 4 - Contenitore della Treccia 3D */
     .section-4 {
       grid-column: 2;
       grid-row: 1 / span 2;
@@ -388,7 +351,7 @@
       </div>
     </div>
 
-    <!-- Sezione 4: Area Centrale della Treccia 3D -->
+    <!-- Sezione 4: Contenitore Treccia 3D -->
     <div class="section-4" id="braid-container"></div>
 
     <!-- Sezione 5: Mazzo di Pesca & Scarti -->
@@ -427,10 +390,12 @@
 
   </div>
 
-  <!-- Script ESTERNI -->
+  <!-- SCRIPT ESTERNI (In ordine di dipendenza) -->
+  <script src="braid/braid.js"></script>
   <script src="deck/cards.js"></script>
   <script src="dice/dice.js"></script>
 
+  <!-- Logica Generale del Gioco -->
   <script>
     let totalPlayers = 3;
     let activePlayer = 1;
@@ -448,7 +413,9 @@
         }
       }
 
-      initDeckSystem();
+      if (typeof initDeckSystem === 'function') {
+        initDeckSystem();
+      }
       setActivePlayer(1);
     }
 
@@ -478,73 +445,71 @@
     }
   </script>
 
-  <!-- Inizializzazione della Treccia 3D in Sezione 4 -->
-  <script type="module">
-    import * as THREE from 'three';
-    import { BraidManager } from './braid/braid.js';
+  <!-- Inizializzazione della Treccia 3D -->
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('braid-container');
 
-    const container = document.getElementById('braid-container');
+      let width = container.clientWidth || 600;
+      let height = container.clientHeight || 500;
 
-    // Dimensioni dinamiche del contenitore centrale
-    let width = container.clientWidth;
-    let height = container.clientHeight;
+      // Scena e Camera Three.js
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x2f3640);
 
-    // Scena & Camera
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x2f3640);
+      const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
 
-    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.appendChild(renderer.domElement);
+      // Luci
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+      scene.add(ambientLight);
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+      dirLight.position.set(10, 20, 15);
+      scene.add(dirLight);
 
-    // Illuminazione
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-    scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    dirLight.position.set(10, 20, 15);
-    scene.add(dirLight);
+      camera.position.set(0, 0, 18);
 
-    camera.position.set(0, 0, 18);
-
-    // Inizializzazione Treccia
-    window.braidManager = new BraidManager(scene, {
+      // Creo il BraidManager
+      window.braidManager = new BraidManager(scene, {
         numStrands: 4,
         onWordChange: (word) => {
-            console.log("Stato della treccia aggiornato:", word);
+          console.log("Stato treccia aggiornato:", word);
         }
-    });
+      });
 
-    // Attiva il click sugli incroci per invertire sovrapposizione (sopra/sotto)
-    window.braidManager.setupInteractivity(camera, renderer.domElement);
+      // Attivo interazione click sugli incroci
+      window.braidManager.setupInteractivity(camera, renderer.domElement);
 
-    // Sequenza di test iniziale
-    window.braidManager.setWord([
+      // Imposto sequenza di test
+      window.braidManager.setWord([
         { index: 0, type: 1 },  // sigma_1
         { index: 1, type: 1 },  // sigma_2
-        { index: 1, type: -1 }, // inv(sigma_2) -> auto-semplificato
+        { index: 1, type: -1 }, // inv(sigma_2) -> auto-annullato
         { index: 2, type: 1 }   // sigma_3
-    ]);
+      ]);
 
-    // Gestione del ridimensionamento dinamico del riquadro
-    const resizeObserver = new ResizeObserver(() => {
+      // Resize dinamico
+      const resizeObserver = new ResizeObserver(() => {
         width = container.clientWidth;
         height = container.clientHeight;
         if (width > 0 && height > 0) {
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-            renderer.setSize(width, height);
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix();
+          renderer.setSize(width, height);
         }
-    });
-    resizeObserver.observe(container);
+      });
+      resizeObserver.observe(container);
 
-    // Loop di rendering
-    function animate() {
+      // Loop di animazione
+      function animate() {
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
-    }
-    animate();
+      }
+      animate();
+    });
   </script>
 </body>
 </html>
