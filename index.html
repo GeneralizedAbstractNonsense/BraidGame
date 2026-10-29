@@ -476,5 +476,49 @@
       coin.style.transform = `rotateY(${currentCoinRotation}deg)`;
     }
   </script>
+  <script>import * as THREE from 'three';
+import { BraidManager } from './braid/braid.js';
+
+// Setup scena Three.js
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Luci
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+scene.add(ambientLight);
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(10, 20, 15);
+scene.add(dirLight);
+
+camera.position.set(0, 0, 18);
+
+// Inizializzazione Treccia (4 fili)
+const braid = new BraidManager(scene, {
+    numStrands: 4,
+    onWordChange: (word) => {
+        console.log("Nuova treccia normalizzata:", word);
+    }
+});
+
+// Attiva interazione click (sopra/sotto)
+braid.setupInteractivity(camera, renderer.domElement);
+
+// Esempio: Generazione treccia da carte precipitate (es. sigma_1, sigma_2, inv(sigma_2), sigma_3)
+braid.setWord([
+    { index: 0, type: 1 },  // sigma_1
+    { index: 1, type: 1 },  // sigma_2
+    { index: 1, type: -1 }, // inv(sigma_2) -> Si annullerà automaticamente con sigma_2!
+    { index: 2, type: 1 }   // sigma_3
+]);
+
+// Loop di rendering
+function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+}
+animate();</script>
 </body>
 </html>
