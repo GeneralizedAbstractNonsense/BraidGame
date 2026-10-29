@@ -481,6 +481,83 @@
     }
 
     .coin-back { transform: rotateY(180deg); }
+
+    /* ==========================================
+   OPTIMIZATION FOR MOBILE DEVICES (< 768px)
+   ========================================== */
+@media (max-width: 768px) {
+  /* Permette lo scorrimento verticale della pagina */
+  body {
+    height: auto;
+    overflow-y: auto;
+  }
+
+  /* Trasforma la griglia a colonne in un layout verticale */
+  .game-board {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    padding: 8px;
+    gap: 16px;
+  }
+
+  .left-panel, 
+  .section-4, 
+  .section-5, 
+  .section-6 {
+    width: 100%;
+  }
+
+  /* Sezione 4: Treccia 3D (necessita di altezza esplicita per il canvas WebGL) */
+  .section-4 {
+    height: 480px;
+    min-height: 450px;
+  }
+
+  /* Ottimizzazione dei pulsanti per il touch */
+  .braid-controls {
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .braid-gen-btn {
+    padding: 8px 12px;
+    font-size: 14px;
+    min-width: 44px; /* Dimensione minima raccomandata per touch */
+  }
+
+  .pos-selector {
+    flex-wrap: wrap;
+  }
+
+  /* Carte nelle mani dei giocatori */
+  .hand-container {
+    min-height: 100px;
+  }
+
+  .card, .card-deck, .card-placeholder {
+    width: 65px;
+    height: 90px;
+  }
+
+  /* Modal Selezione Giocatori */
+  .modal {
+    width: 90%;
+    max-width: 360px;
+    padding: 20px 15px;
+  }
+
+  .btn-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn-player {
+    width: 100%;
+    padding: 14px;
+  }
+}
+    
   </style>
 
   <!-- Three.js & OrbitControls -->
