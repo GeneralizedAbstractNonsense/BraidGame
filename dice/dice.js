@@ -2,7 +2,7 @@ function initDice3D() {
   const container = document.getElementById('dice-canvas-container');
   
   if (!container) {
-    console.error("[Dice 3D] Errore: Contenitore '#dice-canvas-container' non trovato nell'HTML.");
+    console.error("[Dice 3D] Error: '#dice-canvas-container' wasn't found.");
     return;
   }
 
@@ -31,11 +31,11 @@ function initDice3D() {
   const textureLoader = new THREE.TextureLoader();
   const imagePaths = [
     'dice/face_sigma_1.png',
-    'dice/faces_sigma_1_inv.png',
+    'dice/face_sigma_1_inv.png',
     'dice/face_sigma_2.png',
-    'dice/faces_sigma_2_inv.png',
+    'dice/face_sigma_2_inv.png',
     'dice/face_sigma_3.png',
-    'dice/faces_sigma_3_inv.png'
+    'dice/face_sigma_3_inv.png'
   ];
 
   const materials = imagePaths.map((path) => {
@@ -47,13 +47,13 @@ function initDice3D() {
     textureLoader.load(
       path,
       (texture) => {
-        console.log(`[Dice 3D] Immagine caricata con successo: ${path}`);
+        console.log(`[Dice 3D] loaded: ${path}`);
         material.map = texture;
         material.needsUpdate = true;
       },
       undefined,
       (err) => {
-        console.error(`[Dice 3D] ERRORE caricamento immagine '${path}'. Verificare la cartella o avviare un server locale.`, err);
+        console.error(`[Dice 3D] ERROR in loading '${path}'.`, err);
       }
     );
 
@@ -74,7 +74,7 @@ function initDice3D() {
   }
 
   animate();
-  console.log("[Dice 3D] Inizializzazione completata.");
+  console.log("[Dice 3D] Init completed.");
 }
 
 
