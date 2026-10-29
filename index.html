@@ -150,7 +150,6 @@
       min-height: 110px;
     }
 
-    /* Design Carte Migliorato con MathJax */
     .card {
       width: 75px;
       height: 105px;
@@ -213,12 +212,6 @@
       border-radius: 10px;
     }
 
-    .card-deck.empty {
-      background: #718093;
-      border-style: dashed;
-      cursor: default;
-    }
-
     .card-placeholder {
       width: 75px;
       height: 105px;
@@ -232,30 +225,171 @@
       text-align: center;
     }
 
-    .clickable-reshuffle {
-      border: 2px solid #4cd137 !important;
-      animation: pulse 1.5s infinite;
-      cursor: pointer !important;
-    }
-
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(76, 209, 55, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(76, 209, 55, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(76, 209, 55, 0); }
-    }
-
+    /* Sezione 4: Treccia 3D Verticale */
     .section-4 {
       grid-column: 2;
       grid-row: 1 / span 2;
-      background: #2f3640;
-      border: 2px dashed #718093;
+      background: #090d16;
+      border: 2px solid #718093;
       border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #braid-canvas-container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    .braid-ui {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12px;
+    }
+
+    .braid-header {
+      pointer-events: auto;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .braid-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #f8fafc;
+    }
+
+    .braid-word {
+      font-size: 15px;
+      font-weight: bold;
+      color: #38bdf8;
+      font-family: monospace;
+    }
+
+    .braid-controls {
+      pointer-events: auto;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .pos-selector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+
+    .pos-btn {
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(51, 65, 85, 0.8);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pos-btn.active {
+      background: #00a8ff;
+      color: #ffffff;
+      border-color: #0097e6;
+      box-shadow: 0 0 8px rgba(0, 168, 255, 0.5);
+    }
+
+    .gen-row {
       display: flex;
       justify-content: center;
-      align-items: center;
-      color: #718093;
-      font-size: 20px;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .braid-gen-btn {
+      padding: 6px 12px;
+      font-size: 13px;
       font-weight: bold;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.2s;
+    }
+
+    .braid-gen-btn:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+
+    .braid-gen-btn.inv {
+      background: #8b5cf6;
+    }
+
+    .braid-gen-btn.inv:hover {
+      background: #7c3aed;
+    }
+
+    .action-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .braid-act-btn {
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(51, 65, 85, 0.9);
+      color: #f1f5f9;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .braid-act-btn.danger {
+      background: rgba(225, 29, 72, 0.85);
+    }
+
+    .braid-act-btn:hover {
+      filter: brightness(1.15);
+    }
+
+    .braid-info {
+      font-size: 11px;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-around;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 4px;
     }
 
     .section-5 {
@@ -338,8 +472,9 @@
     .coin-back { transform: rotateY(180deg); }
   </style>
 
-  <!-- Three.js CDN -->
+  <!-- Three.js & OrbitControls -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
@@ -385,9 +520,44 @@
       </div>
     </div>
 
-    <!-- Sezione 4: Area Centrale -->
-    <div class="section-4">
-      <span>SEZIONE 4 (VUOTA)</span>
+    <!-- Sezione 4: Treccia 3D Verticale -->
+    <div class="section-4" id="section-4">
+      <div id="braid-canvas-container"></div>
+      
+      <div class="braid-ui">
+        <div class="braid-header">
+          <span class="braid-title">Gruppo Treccia B₄ (3D)</span>
+          <span class="braid-word" id="braidLabel">e</span>
+        </div>
+
+        <div class="braid-controls">
+          <div class="pos-selector">
+            <span>Posizione inserimento:</span>
+            <button id="pos-top-btn" class="pos-btn" onclick="setInsertPosition('top')">Sopra (Inizio)</button>
+            <button id="pos-bottom-btn" class="pos-btn active" onclick="setInsertPosition('bottom')">Sotto (Fine)</button>
+          </div>
+
+          <div class="gen-row">
+            <button class="braid-gen-btn" onclick="addGenerator(1, 1)">σ₁</button>
+            <button class="braid-gen-btn inv" onclick="addGenerator(1, -1)">σ₁⁻¹</button>
+            <button class="braid-gen-btn" onclick="addGenerator(2, 1)">σ₂</button>
+            <button class="braid-gen-btn inv" onclick="addGenerator(2, -1)">σ₂⁻¹</button>
+            <button class="braid-gen-btn" onclick="addGenerator(3, 1)">σ₃</button>
+            <button class="braid-gen-btn inv" onclick="addGenerator(3, -1)">σ₃⁻¹</button>
+          </div>
+
+          <div class="action-row">
+            <button class="braid-act-btn" onclick="undoGenerator()">Annulla</button>
+            <button class="braid-act-btn" onclick="normalizeBraid()">Semplifica</button>
+            <button class="braid-act-btn danger" onclick="resetBraid()">Reset</button>
+          </div>
+
+          <div class="braid-info">
+            <span>Lunghezza: <b id="wordLengthVal">0</b></span>
+            <span>Permutazione: <b id="permutationVal">(1)(2)(3)(4)</b></span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Sezione 5: Mazzo di Pesca & Scarti -->
@@ -430,6 +600,7 @@
   <script src="deck/cards.js"></script>
   <script src="dice/dice.js"></script>
 
+  <!-- Script LOGICA GIOCO E VISUALIZZATORE TRECCIA 3D VERTICALE -->
   <script>
     let totalPlayers = 3;
     let activePlayer = 1;
@@ -475,6 +646,354 @@
       currentCoinRotation += extraFlips + targetAngle - (currentCoinRotation % 360);
       coin.style.transform = `rotateY(${currentCoinRotation}deg)`;
     }
+
+    /* -------------------------------------------------------------
+       VISUALIZZATORE 3D TRECCIA VERTICALE (SEZIONE 4)
+    ------------------------------------------------------------- */
+    const STRAND_COLORS = [0xef4444, 0xeab308, 0x06b6d4, 0x10b981];
+    const STRAND_POSITIONS_X = [-2.25, -0.75, 0.75, 2.25];
+    const DISC_Y_TOP = 4.5;
+    const DISC_Y_BOTTOM = -4.5;
+
+    let braidWord = [];
+    let insertPosition = 'bottom'; // 'top' per sopra, 'bottom' per sotto
+    let animatedProgress = 1.0;
+    let isAnimating = false;
+
+    const canvasContainer = document.getElementById('braid-canvas-container');
+    const braidScene = new THREE.Scene();
+    braidScene.fog = new THREE.FogExp2(0x090d16, 0.025);
+
+    const braidCamera = new THREE.PerspectiveCamera(45, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 1000);
+    braidCamera.position.set(0, 0, 14);
+
+    const braidRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    braidRenderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
+    braidRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    canvasContainer.appendChild(braidRenderer.domElement);
+
+    const braidControls = new THREE.OrbitControls(braidCamera, braidRenderer.domElement);
+    braidControls.enableDamping = true;
+    braidControls.dampingFactor = 0.05;
+
+    // Luci
+    braidScene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    const light1 = new THREE.DirectionalLight(0xffffff, 0.7);
+    light1.position.set(10, 15, 10);
+    braidScene.add(light1);
+
+    const light2 = new THREE.DirectionalLight(0x38bdf8, 0.4);
+    light2.position.set(-10, -15, -10);
+    braidScene.add(light2);
+
+    // Dischi superiore e inferiore
+    const discGeo = new THREE.CylinderGeometry(3.2, 3.2, 0.2, 48);
+    const discMat = new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      metalness: 0.8,
+      roughness: 0.2,
+      transparent: true,
+      opacity: 0.85
+    });
+
+    const topDisc = new THREE.Mesh(discGeo, discMat);
+    topDisc.rotation.x = Math.PI / 2;
+    topDisc.position.y = DISC_Y_TOP;
+    braidScene.add(topDisc);
+
+    const bottomDisc = new THREE.Mesh(discGeo, discMat);
+    bottomDisc.rotation.x = Math.PI / 2;
+    bottomDisc.position.y = DISC_Y_BOTTOM;
+    braidScene.add(bottomDisc);
+
+    // Boccole per i fori dei fili
+    STRAND_POSITIONS_X.forEach(x => {
+      const holeGeo = new THREE.TorusGeometry(0.22, 0.05, 16, 32);
+      const holeMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.1 });
+      
+      const hTop = new THREE.Mesh(holeGeo, holeMat);
+      hTop.rotation.x = Math.PI / 2;
+      hTop.position.set(x, DISC_Y_TOP, 0);
+      braidScene.add(hTop);
+
+      const hBottom = new THREE.Mesh(holeGeo, holeMat);
+      hBottom.rotation.x = Math.PI / 2;
+      hBottom.position.set(x, DISC_Y_BOTTOM, 0);
+      braidScene.add(hBottom);
+    });
+
+    // Mesh dei fili
+    const strandMeshes = [];
+    for (let i = 0; i < 4; i++) {
+      const strandMat = new THREE.MeshStandardMaterial({
+        color: STRAND_COLORS[i],
+        roughness: 0.2,
+        metalness: 0.3
+      });
+      const strandMesh = new THREE.Mesh(new THREE.BufferGeometry(), strandMat);
+      braidScene.add(strandMesh);
+      strandMeshes.push(strandMesh);
+    }
+
+    // Calcolo curve treccia verticale
+    function computeStrandCurves(word, tAnim = 1.0) {
+      const numSteps = word.length;
+      const strandPaths = [[], [], [], []];
+      let currentPermutation = [0, 1, 2, 3];
+
+      const ySpan = DISC_Y_TOP - DISC_Y_BOTTOM;
+
+      for (let s = 0; s < 4; s++) {
+        strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], DISC_Y_TOP, 0));
+      }
+
+      if (numSteps === 0) {
+        for (let s = 0; s < 4; s++) {
+          strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], DISC_Y_BOTTOM, 0));
+        }
+      } else {
+        for (let stepIdx = 0; stepIdx < numSteps; stepIdx++) {
+          const gen = word[stepIdx];
+          const i = gen.index - 1;
+          const sign = gen.sign;
+
+          const yStart = DISC_Y_TOP - (stepIdx / numSteps) * ySpan;
+          const yEnd = DISC_Y_TOP - ((stepIdx + 1) / numSteps) * ySpan;
+
+          const isLastStep = (stepIdx === numSteps - 1);
+          const factor = isLastStep ? tAnim : 1.0;
+
+          const strandA = currentPermutation[i];
+          const strandB = currentPermutation[i + 1];
+
+          const xA = STRAND_POSITIONS_X[i];
+          const xB = STRAND_POSITIONS_X[i + 1];
+
+          const zDepth = 0.85 * sign;
+          const samples = 12;
+
+          for (let s = 1; s <= samples; s++) {
+            const frac = s / samples;
+            const y = THREE.MathUtils.lerp(yStart, yEnd, frac);
+
+            for (let pos = 0; pos < 4; pos++) {
+              if (pos !== i && pos !== i + 1) {
+                const st = currentPermutation[pos];
+                const x = STRAND_POSITIONS_X[pos];
+                strandPaths[st].push(new THREE.Vector3(x, y, 0));
+              }
+            }
+
+            const xCurrentA = THREE.MathUtils.lerp(xA, THREE.MathUtils.lerp(xA, xB, factor), frac);
+            const zCurrentA = Math.sin(frac * Math.PI) * zDepth * factor;
+            strandPaths[strandA].push(new THREE.Vector3(xCurrentA, y, zCurrentA));
+
+            const xCurrentB = THREE.MathUtils.lerp(xB, THREE.MathUtils.lerp(xB, xA, factor), frac);
+            const zCurrentB = -Math.sin(frac * Math.PI) * zDepth * factor;
+            strandPaths[strandB].push(new THREE.Vector3(xCurrentB, y, zCurrentB));
+          }
+
+          if (!isLastStep || tAnim >= 0.99) {
+            currentPermutation[i] = strandB;
+            currentPermutation[i + 1] = strandA;
+          }
+        }
+      }
+
+      return { strandPaths, currentPermutation };
+    }
+
+    function updateBraidGeometries() {
+      const { strandPaths } = computeStrandCurves(braidWord, animatedProgress);
+
+      for (let s = 0; s < 4; s++) {
+        const points = strandPaths[s];
+        const curve = new THREE.CatmullRomCurve3(points);
+        
+        if (strandMeshes[s].geometry) strandMeshes[s].geometry.dispose();
+        strandMeshes[s].geometry = new THREE.TubeGeometry(curve, points.length * 2, 0.12, 16, false);
+      }
+    }
+
+    // Modalità di inserimento: Sopra (Inizio) / Sotto (Fine)
+    function setInsertPosition(pos) {
+      insertPosition = pos;
+      document.getElementById('pos-top-btn').classList.toggle('active', pos === 'top');
+      document.getElementById('pos-bottom-btn').classList.toggle('active', pos === 'bottom');
+    }
+
+    function addGenerator(index, sign) {
+      if (isAnimating) return;
+      const gen = { index, sign };
+      if (insertPosition === 'top') {
+        braidWord.unshift(gen); // Inserisci in cima
+      } else {
+        braidWord.push(gen); // Inserisci in coda
+      }
+      isAnimating = true;
+      animatedProgress = 0.0;
+      updateUI();
+    }
+
+    function undoGenerator() {
+      if (isAnimating || braidWord.length === 0) return;
+      if (insertPosition === 'top') {
+        braidWord.shift();
+      } else {
+        braidWord.pop();
+      }
+      isAnimating = true;
+      animatedProgress = 0.0;
+      updateUI();
+    }
+
+    function resetBraid() {
+      braidWord = [];
+      animatedProgress = 1.0;
+      isAnimating = false;
+      updateUI();
+      updateBraidGeometries();
+    }
+
+    function reduceBraidWord(word) {
+      let current = word.map(g => ({ ...g }));
+
+      function freeCancel(w) {
+        let res = w.map(g => ({ ...g }));
+        let changed = true;
+        while (changed) {
+          changed = false;
+          for (let i = 0; i < res.length; i++) {
+            for (let j = i + 1; j < res.length; j++) {
+              let canCommute = true;
+              for (let k = i + 1; k < j; k++) {
+                if (Math.abs(res[i].index - res[k].index) < 2) {
+                  canCommute = false;
+                  break;
+                }
+              }
+              if (canCommute && res[i].index === res[j].index && res[i].sign === -res[j].sign) {
+                res.splice(j, 1);
+                res.splice(i, 1);
+                changed = true;
+                break;
+              }
+            }
+            if (changed) break;
+          }
+        }
+        return res;
+      }
+
+      let changed = true;
+      let iterations = 0;
+      while (changed && iterations < 100) {
+        iterations++;
+        changed = false;
+
+        let cancelled = freeCancel(current);
+        if (cancelled.length < current.length) {
+          current = cancelled;
+          changed = true;
+          continue;
+        }
+
+        for (let i = 0; i <= current.length - 3; i++) {
+          const g1 = current[i], g2 = current[i+1], g3 = current[i+2];
+          if (g1.sign === g2.sign && g2.sign === g3.sign) {
+            if (g1.index === g3.index && Math.abs(g1.index - g2.index) === 1) {
+              let test = current.map(g => ({ ...g }));
+              test[i] = { index: g2.index, sign: g1.sign };
+              test[i+1] = { index: g1.index, sign: g1.sign };
+              test[i+2] = { index: g2.index, sign: g1.sign };
+
+              let testReduced = freeCancel(test);
+              if (testReduced.length < current.length) {
+                current = testReduced;
+                changed = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      return current;
+    }
+
+    function normalizeBraid() {
+      if (isAnimating) return;
+      const reduced = reduceBraidWord(braidWord);
+      if (reduced.length < braidWord.length) {
+        braidWord = reduced;
+        isAnimating = true;
+        animatedProgress = 0.0;
+        updateUI();
+      }
+    }
+
+    function updateUI() {
+      const labelEl = document.getElementById('braidLabel');
+      if (braidWord.length === 0) {
+        labelEl.innerText = "e";
+      } else {
+        labelEl.innerText = braidWord.map(g => `σ${g.index}${g.sign === -1 ? '⁻¹' : ''}`).join(' ');
+      }
+
+      document.getElementById('wordLengthVal').innerText = braidWord.length;
+
+      const { currentPermutation } = computeStrandCurves(braidWord, 1.0);
+      const visited = [false, false, false, false];
+      const cycles = [];
+
+      for (let s = 0; s < 4; s++) {
+        if (!visited[s]) {
+          let cycle = [];
+          let curr = s;
+          while (!visited[curr]) {
+            visited[curr] = true;
+            cycle.push(curr + 1);
+            curr = currentPermutation.indexOf(curr);
+          }
+          cycles.push(cycle);
+        }
+      }
+
+      document.getElementById('permutationVal').innerText = cycles.map(c => `(${c.join('')})`).join('');
+    }
+
+    let lastTime = performance.now();
+    function animateBraid(currentTime) {
+      requestAnimationFrame(animateBraid);
+
+      const deltaTime = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+
+      if (isAnimating) {
+        animatedProgress += deltaTime * 2.8;
+        if (animatedProgress >= 1.0) {
+          animatedProgress = 1.0;
+          isAnimating = false;
+        }
+        updateBraidGeometries();
+      }
+
+      braidControls.update();
+      braidRenderer.render(braidScene, braidCamera);
+    }
+
+    // Gestione ridimensionamento per adattarsi alla griglia
+    window.addEventListener('resize', () => {
+      const w = canvasContainer.clientWidth;
+      const h = canvasContainer.clientHeight;
+      braidCamera.aspect = w / h;
+      braidCamera.updateProjectionMatrix();
+      braidRenderer.setSize(w, h);
+    });
+
+    // Inizializzazione visualizzatore
+    updateUI();
+    updateBraidGeometries();
+    animateBraid(performance.now());
   </script>
 </body>
 </html>
