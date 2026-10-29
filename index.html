@@ -13,6 +13,15 @@
   </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
+  <!-- Importmap per abilitare l'importazione ES Module di Three.js -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.js"
+      }
+    }
+  </script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -244,18 +253,15 @@
       100% { box-shadow: 0 0 0 0 rgba(76, 209, 55, 0); }
     }
 
+    /* Modifica Sezione 4 per contenere il canvas Three.js */
     .section-4 {
       grid-column: 2;
       grid-row: 1 / span 2;
       background: #2f3640;
-      border: 2px dashed #718093;
+      border: 2px solid #718093;
       border-radius: 8px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #718093;
-      font-size: 20px;
-      font-weight: bold;
+      position: relative;
+      overflow: hidden;
     }
 
     .section-5 {
@@ -337,9 +343,6 @@
 
     .coin-back { transform: rotateY(180deg); }
   </style>
-
-  <!-- Three.js CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
@@ -385,10 +388,8 @@
       </div>
     </div>
 
-    <!-- Sezione 4: Area Centrale -->
-    <div class="section-4">
-      <span>SEZIONE 4 (VUOTA)</span>
-    </div>
+    <!-- Sezione 4: Area Centrale della Treccia 3D -->
+    <div class="section-4" id="braid-container"></div>
 
     <!-- Sezione 5: Mazzo di Pesca & Scarti -->
     <div class="section-5">
@@ -476,49 +477,74 @@
       coin.style.transform = `rotateY(${currentCoinRotation}deg)`;
     }
   </script>
-  <script>import * as THREE from 'three';
-import { BraidManager } from './braid/braid.js';
 
-// Setup scena Three.js
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+  <!-- Inizializzazione della Treccia 3D in Sezione 4 -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { BraidManager } from './braid/braid.js';
 
-// Luci
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-scene.add(ambientLight);
-const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-dirLight.position.set(10, 20, 15);
-scene.add(dirLight);
+    const container = document.getElementById('braid-container');
 
-camera.position.set(0, 0, 18);
+    // Dimensioni dinamiche del contenitore centrale
+    let width = container.clientWidth;
+    let height = container.clientHeight;
 
-// Inizializzazione Treccia (4 fili)
-const braid = new BraidManager(scene, {
-    numStrands: 4,
-    onWordChange: (word) => {
-        console.log("Nuova treccia normalizzata:", word);
+    // Scena & Camera
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x2f3640);
+
+    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    // Illuminazione
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    dirLight.position.set(10, 20, 15);
+    scene.add(dirLight);
+
+    camera.position.set(0, 0, 18);
+
+    // Inizializzazione Treccia
+    window.braidManager = new BraidManager(scene, {
+        numStrands: 4,
+        onWordChange: (word) => {
+            console.log("Stato della treccia aggiornato:", word);
+        }
+    });
+
+    // Attiva il click sugli incroci per invertire sovrapposizione (sopra/sotto)
+    window.braidManager.setupInteractivity(camera, renderer.domElement);
+
+    // Sequenza di test iniziale
+    window.braidManager.setWord([
+        { index: 0, type: 1 },  // sigma_1
+        { index: 1, type: 1 },  // sigma_2
+        { index: 1, type: -1 }, // inv(sigma_2) -> auto-semplificato
+        { index: 2, type: 1 }   // sigma_3
+    ]);
+
+    // Gestione del ridimensionamento dinamico del riquadro
+    const resizeObserver = new ResizeObserver(() => {
+        width = container.clientWidth;
+        height = container.clientHeight;
+        if (width > 0 && height > 0) {
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+    });
+    resizeObserver.observe(container);
+
+    // Loop di rendering
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
     }
-});
-
-// Attiva interazione click (sopra/sotto)
-braid.setupInteractivity(camera, renderer.domElement);
-
-// Esempio: Generazione treccia da carte precipitate (es. sigma_1, sigma_2, inv(sigma_2), sigma_3)
-braid.setWord([
-    { index: 0, type: 1 },  // sigma_1
-    { index: 1, type: 1 },  // sigma_2
-    { index: 1, type: -1 }, // inv(sigma_2) -> Si annullerà automaticamente con sigma_2!
-    { index: 2, type: 1 }   // sigma_3
-]);
-
-// Loop di rendering
-function animate() {
-    requestAnimationFrame(animate);
-    renderer.render(scene, camera);
-}
-animate();</script>
+    animate();
+  </script>
 </body>
 </html>
