@@ -441,6 +441,17 @@
       height: 140px;
     }
 
+    .dice-result-label {
+  margin-top: 6px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #38bdf8;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
     .coin-wrapper { perspective: 1000px; }
 
     .coin {
@@ -582,6 +593,7 @@
       <div class="component-box">
         <span class="slot-label">Dice</span>
         <div id="dice-canvas-container"></div>
+        <div id="dice-result-label" class="dice-result-label">$\sigma_1$</div>
       </div>
       <div class="component-box">
         <span class="slot-label">Coin</span>
@@ -956,5 +968,27 @@
     updateBraidGeometries();
     animateBraid(performance.now());
   </script>
+  <script>
+const diceFaceMap = {
+  1: '\\sigma_1',
+  2: '\\sigma_1^{-1}',
+  3: '\\sigma_2',
+  4: '\\sigma_2^{-1}',
+  5: '\\sigma_3',
+  6: '\\sigma_3^{-1}'
+};
+
+
+function updateDiceResult(faceNumber) {
+  const labelEl = document.getElementById('dice-result-label');
+  const latexFormula = diceFaceMap[faceNumber] || '\\sigma_1';
+  
+
+  labelEl.innerHTML = `$${latexFormula}$`;
+
+  if (window.MathJax && MathJax.typesetPromise) {
+    MathJax.typesetPromise([labelEl]);
+  }
+}</script>
 </body>
 </html>
