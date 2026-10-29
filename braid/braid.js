@@ -1,9 +1,8 @@
-import * as THREE from 'three';
-
 /**
  * Gestore della Treccia 3D (Braid Group Representation)
+ * Utilizza la libreria globale THREE.js
  */
-export class BraidManager {
+class BraidManager {
     /**
      * @param {THREE.Scene} scene - La scena Three.js dove aggiungere la treccia.
      * @param {Object} options - Configurazione di rendering e struttura.
@@ -24,13 +23,9 @@ export class BraidManager {
             0x1982c4  // Filo 4 - Blu
         ];
 
-        // Parola algebrica della treccia: lista di generatori { id, index, type }
-        // index: 0..numStrands-2 (es. 0 per sigma_1, 1 per sigma_2, 2 per sigma_3)
-        // type: 1 = sigma_i (passa sopra), -1 = inv(sigma_i) (passa sotto)
         this.word = [];
         this.nextId = 1;
 
-        // Gruppo Three.js per contenere le geometrie
         this.braidGroup = new THREE.Group();
         this.scene.add(this.braidGroup);
 
@@ -38,11 +33,6 @@ export class BraidManager {
         this.onWordChangeCallback = options.onWordChange || null;
     }
 
-    /**
-     * Imposta la sequenza della treccia generata dal lancio delle carte.
-     * @param {Array<{index: number, type: number}>} wordSequence 
-     * @param {boolean} autoNormalize 
-     */
     setWord(wordSequence, autoNormalize = true) {
         this.word = wordSequence.map(g => ({
             id: this.nextId++,
@@ -56,11 +46,6 @@ export class BraidManager {
         this.render();
     }
 
-    /**
-     * Aggiunge un singolo incrocio (generatore) alla treccia.
-     * @param {number} index - Indice dell'incrocio (0, 1 o 2 per 4 fili)
-     * @param {number} type - 1 per sigma_i, -1 per inv(sigma_i)
-     */
     addGenerator(index, type = 1, autoNormalize = true) {
         if (index < 0 || index >= this.numStrands - 1) return;
         this.word.push({ id: this.nextId++, index, type: type >= 0 ? 1 : -1 });
@@ -71,9 +56,6 @@ export class BraidManager {
         this.render();
     }
 
-    /**
-     * NORMALIZZAZIONE: Elimina coppie adiacenti inverse sigma_i * inv(sigma_i) o inv(sigma_i) * sigma_i.
-     */
     normalize() {
         let changed = true;
         while (changed) {
@@ -82,7 +64,6 @@ export class BraidManager {
                 const g1 = this.word[i];
                 const g2 = this.word[i + 1];
 
-                // Stesso filo/incrocio ma segno opposto -> si annullano (reidemeister move 1/2)
                 if (g1.index === g2.index && g1.type === -g2.type) {
                     this.word.splice(i, 2);
                     changed = true;
@@ -96,40 +77,27 @@ export class BraidManager {
         }
     }
 
-    /**
-     * Inverte la struttura dell'incrocio selezionato ("sopra" <-> "sotto")
-     * e ri-normalizza automaticamente la treccia.
-     * @param {number} stepIndex - Indice del livello nella sequenza word.
-     */
     flipCrossing(stepIndex) {
         if (stepIndex >= 0 && stepIndex < this.word.length) {
-            this.word[stepIndex].type *= -1; // Inverte sigma_i <-> inv(sigma_i)
+            this.word[stepIndex].type *= -1;
             this.normalize();
             this.render();
         }
     }
 
-    /**
-     * Calcola i punti 3D nello spazio per ciascun filo della treccia.
-     */
     computeStrandPoints() {
         const steps = this.word.length;
         const pointsPerStrand = Array.from({ length: this.numStrands }, () => []);
-
-        // Traccia quale filo si trova in quale colonna orizzontale
         let currentStrandAtColumn = Array.from({ length: this.numStrands }, (_, k) => k);
 
-        // Centratura verticale della treccia
         const startY = (steps * this.stepHeight) / 2;
 
-        // Punti iniziali in alto
         for (let col = 0; col < this.numStrands; col++) {
             const strandId = currentStrandAtColumn[col];
             const x = (col - (this.numStrands - 1) / 2) * this.strandSpacing;
             pointsPerStrand[strandId].push(new THREE.Vector3(x, startY, 0));
         }
 
-        // Calcolo traiettorie passo per passo
         for (let step = 0; step < steps; step++) {
             const { index, type } = this.word[step];
             const topY = startY - step * this.stepHeight;
@@ -146,11 +114,9 @@ export class BraidManager {
             const rightX = (rightCol - (this.numStrands - 1) / 2) * this.strandSpacing;
             const midX = (leftX + rightX) / 2;
 
-            // Offset Z per il passaggio sopra (+Z) o sotto (-Z)
             const zOffsetLeft = type * this.overOffset;
             const zOffsetRight = -type * this.overOffset;
 
-            // Curva per il filo di sinistra che si sposta a destra
             pointsPerStrand[strandLeft].push(
                 new THREE.Vector3(THREE.MathUtils.lerp(leftX, midX, 0.5), THREE.MathUtils.lerp(topY, midY, 0.5), zOffsetLeft * 0.7),
                 new THREE.Vector3(midX, midY, zOffsetLeft),
@@ -158,15 +124,13 @@ export class BraidManager {
                 new THREE.Vector3(rightX, bottomY, 0)
             );
 
-            // Curva per il filo di destra che si sposta a sinistra
             pointsPerStrand[strandRight].push(
                 new THREE.Vector3(THREE.MathUtils.lerp(rightX, midX, 0.5), THREE.MathUtils.lerp(topY, midY, 0.5), zOffsetRight * 0.7),
                 new THREE.Vector3(midX, midY, zOffsetRight),
-                new THREE.Vector3(THREE.MathUtils.lerp(midX, leftX, 0.5), THREE.MathUtils.lerp(midY, bottomY, 0.5), zOffsetRight * 0.7),
+                new THREE.Vector3(THREE.MathUtils.lerp(midX, leftX, 0.5), THREE.MathUtils.lerp(midY, bottomY, 0.5), zOffsetLeft * 0.7),
                 new THREE.Vector3(leftX, bottomY, 0)
             );
 
-            // Fili non coinvolti nell'incrocio scendono dritti
             for (let col = 0; col < this.numStrands; col++) {
                 if (col !== leftCol && col !== rightCol) {
                     const strandStraight = currentStrandAtColumn[col];
@@ -178,7 +142,6 @@ export class BraidManager {
                 }
             }
 
-            // Aggiorna la mappa delle posizioni per il prossimo livello
             currentStrandAtColumn[leftCol] = strandRight;
             currentStrandAtColumn[rightCol] = strandLeft;
         }
@@ -186,11 +149,7 @@ export class BraidManager {
         return pointsPerStrand;
     }
 
-    /**
-     * Rigenera le mesh 3D della treccia e gli hot-spot interattivi.
-     */
     render() {
-        // Pulisce la geometria precedente
         while (this.braidGroup.children.length > 0) {
             const child = this.braidGroup.children.pop();
             if (child.geometry) child.geometry.dispose();
@@ -203,7 +162,6 @@ export class BraidManager {
 
         const pointsPerStrand = this.computeStrandPoints();
 
-        // 1. Costruzione dei tubi 3D per i fili
         pointsPerStrand.forEach((pts, strandIdx) => {
             if (pts.length < 2) return;
 
@@ -220,7 +178,6 @@ export class BraidManager {
             this.braidGroup.add(tubeMesh);
         });
 
-        // 2. Creazione degli hotspot cliccabili per ciascun incrocio
         const steps = this.word.length;
         const startY = (steps * this.stepHeight) / 2;
 
@@ -231,7 +188,6 @@ export class BraidManager {
             const rightX = (index + 1 - (this.numStrands - 1) / 2) * this.strandSpacing;
             const midX = (leftX + rightX) / 2;
 
-            // Sfera invisibile per raycasting ed eventuale anello indicatore
             const hitGeo = new THREE.SphereGeometry(this.strandSpacing * 0.55, 16, 16);
             const hitMat = new THREE.MeshBasicMaterial({
                 transparent: true,
@@ -248,11 +204,6 @@ export class BraidManager {
         }
     }
 
-    /**
-     * Abilita l'interazione con il mouse/touch per invertire gli incroci "sopra/sotto".
-     * @param {THREE.Camera} camera 
-     * @param {HTMLElement} domElement 
-     */
     setupInteractivity(camera, domElement) {
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
@@ -272,3 +223,6 @@ export class BraidManager {
         });
     }
 }
+
+// Esponi globalmente
+window.BraidManager = BraidManager;
