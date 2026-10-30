@@ -3,16 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BraidGame</title>
-  
-  <script>
-    MathJax = {
-      tex: { inlineMath: [['$', '$']] },
-      svg: { fontCache: 'global' }
-    };
-  </script>
-  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
-
+  <title>Braid</title>
   <style>
     * {
       box-sizing: border-box;
@@ -21,837 +12,331 @@
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #1e272e;
-      color: #f5f6fa;
-      height: 100vh;
-      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: rgb(239, 239, 239);
+      color: #1e293b;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 40px 20px 20px 20px;
+      position: relative;
     }
 
-    /* Modal */
-    #modal-overlay {
+    /* Main Container */
+    .main-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 40px;
+      width: 100%;
+      max-width: 800px;
+      text-align: center;
+      margin-top: 2vh; /* Posiziona il logo più in alto */
+    }
+
+    /* Centered & Enlarged Logo */
+    .logo-container img {
+      max-width: 420px; /* Logo più grande */
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+      user-select: none;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
+    }
+
+    /* Horizontal Buttons Container */
+    .nav-buttons {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    /* Pencil / Hand-drawn Style Button */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 26px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e293b;
+      background-color: #ffffff;
+      /* Bordo irregolare stile disegno a mano libera */
+      border: 2.5px solid #1e293b;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      text-decoration: none;
+      cursor: pointer;
+      /* Ombra schizzata / trattino */
+      box-shadow: 3px 4px 0px #1e293b;
+      transition: all 0.2s ease-in-out;
+      min-width: 130px;
+      user-select: none;
+    }
+
+    .btn:hover {
+      background-color: #f8fafc;
+      transform: scale(1.04) rotate(-1deg);
+      box-shadow: 5px 6px 0px #1e293b;
+      color: #0284c7;
+      border-color: #0284c7;
+    }
+
+    .btn:hover svg {
+      stroke: #0284c7;
+      fill: #0284c7;
+    }
+
+    .btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 2px 0px #1e293b;
+    }
+
+    /* SVG Icon Style */
+    .btn-icon {
+      width: 18px;
+      height: 18px;
+      stroke: #1e293b;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-icon.filled {
+      fill: #1e293b;
+    }
+
+    /* Tutorial Overlay Modal */
+    .modal-overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
       display: flex;
       justify-content: center;
       align-items: center;
       z-index: 1000;
-    }
-
-    .modal {
-      background: #2f3640;
-      padding: 30px 40px;
-      border-radius: 12px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      border: 1px solid #718093;
-    }
-
-    .modal h2 { margin-bottom: 20px; color: #f5f6fa; }
-
-    .btn-group {
-      display: flex;
-      gap: 15px;
-      justify-content: center;
-    }
-
-    .btn-player {
-      padding: 12px 24px;
-      font-size: 18px;
-      font-weight: bold;
-      background: #00a8ff;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-    }
-
-    .btn-player:hover {
-      background: #0097e6;
-      transform: translateY(-2px);
-    }
-
-    /* Main Grid Layout */
-    .game-board {
-      display: grid;
-      grid-template-columns: 340px 1fr 360px;
-      grid-template-rows: 1fr 1fr;
-      gap: 12px;
-      height: 100vh;
-      padding: 12px;
-    }
-
-    .left-panel {
-      grid-column: 1;
-      grid-row: 1 / span 2;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .player-slot {
-      flex: 1;
-      background: #353b48;
-      border: 2px solid #718093;
-      border-radius: 8px;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      transition: border-color 0.3s, background-color 0.3s;
-    }
-
-    .player-slot.active-turn {
-      border-color: #4cd137;
-      background: #2d383c;
-      box-shadow: inset 0 0 10px rgba(76, 209, 55, 0.2);
-    }
-
-    .player-slot.disabled {
-      opacity: 0.35;
+      opacity: 0;
       pointer-events: none;
-      filter: grayscale(80%);
+      transition: opacity 0.25s ease;
+      padding: 20px;
     }
 
-    .player-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
-    .player-header h3 { font-size: 15px; color: #f5f6fa; }
-
-    .turn-btn {
-      padding: 4px 10px;
-      font-size: 12px;
-      background: #487eb0;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .turn-btn:hover { background: #40739e; }
-
-    .hand-container {
-      flex: 1;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      overflow-x: auto;
-      padding: 8px;
-      background: rgba(0, 0, 0, 0.25);
-      border-radius: 6px;
-      min-height: 110px;
-    }
-
-    .card {
-      width: 75px;
-      height: 105px;
-      background: #f8f9fa;
-      color: #1e272e;
-      border: 2px solid #2f3640;
-      border-radius: 8px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      user-select: none;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-      transition: transform 0.2s, box-shadow 0.2s;
-      flex-shrink: 0;
-      padding: 4px;
-    }
-
-    .card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 10px 16px rgba(0,0,0,0.5);
-    }
-
-    .card.jolly-card {
-      background: linear-gradient(135deg, #f1c40f, #e67e22);
-      color: #ffffff;
-      border-color: #f39c12;
-      font-weight: bold;
-    }
-
-    .card svg {
-      max-width: 100%;
-      max-height: 100%;
-    }
-
-    .card-deck {
-      width: 75px;
-      height: 105px;
-      background: linear-gradient(135deg, #e1b12c, #e67e22);
-      border: 2px solid #f5f6fa;
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: #ffffff;
-      font-weight: bold;
-      font-size: 12px;
-      cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-      user-select: none;
-      position: relative;
-    }
-
-    .card-deck small {
-      margin-top: 4px;
-      font-size: 11px;
-      background: rgba(0,0,0,0.3);
-      padding: 2px 6px;
-      border-radius: 10px;
-    }
-
-    .card-placeholder {
-      width: 75px;
-      height: 105px;
-      border: 2px dashed #718093;
-      border-radius: 8px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #718093;
-      font-size: 12px;
-      text-align: center;
-    }
-
-    /* Section 4: Vertical 3D Braid */
-    .section-4 {
-      grid-column: 2;
-      grid-row: 1 / span 2;
-      background: #090d16;
-      border: 2px solid #718093;
-      border-radius: 8px;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      touch-action: none;
-      user-select: none;
-    }
-
-    #braid-canvas-container {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 1;
-    }
-
-    .braid-ui {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 10;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 12px;
-}
-
-    .braid-header {
+    .modal-overlay.active {
+      opacity: 1;
       pointer-events: auto;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 10px;
-      padding: 8px 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
 
-    .braid-title {
+    .modal-card {
+      background: #ffffff;
+      padding: 32px;
+      /* Stile matita anche per il modal */
+      border: 2.5px solid #1e293b;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      box-shadow: 6px 8px 0px #1e293b;
+      max-width: 480px;
+      width: 100%;
+      text-align: left;
+      transform: translateY(12px);
+      transition: transform 0.25s ease;
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: translateY(0);
+    }
+
+    .modal-card h2 {
+      font-size: 22px;
+      margin-bottom: 12px;
+      color: #0f172a;
+    }
+
+    .modal-card p {
       font-size: 14px;
-      font-weight: bold;
-      color: #f8fafc;
+      line-height: 1.6;
+      color: #475569;
+      margin-bottom: 24px;
     }
 
-    .braid-word-box {
-  flex: 1;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 6px 12px;
-  text-align: center;
-  height: 38px;
+    .modal-close-btn {
+      display: block;
+      margin-left: auto;
+      padding: 8px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      background: #ffffff;
+      color: #1e293b;
+      border: 2px solid #1e293b;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      box-shadow: 2px 3px 0px #1e293b;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close-btn:hover {
+      background: #f1f5f9;
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 4px 0px #1e293b;
+    }
+
+    /* Clickable Footer in Bottom-Right */
+    /* Clickable Footer in Bottom-Right */
+footer {
+  position: absolute;
+  bottom: 16px;
+  right: 20px;
+  font-size: 11px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  overflow-x: auto;
-}
-
-.braid-word {
-  font-size: 16px;
-  font-weight: bold;
-  color: #38bdf8;
-  font-family: monospace;
-  white-space: nowrap;
-}
-
-    .info-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.info-badge {
-  flex: 1;
-  background: rgba(30, 41, 59, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-  padding: 5px 8px;
-  font-size: 11px;
-  color: #94a3b8;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-    .info-badge b {
-  color: #f8fafc;
-}
-    
-
-    .scroll-hint {
-      position: absolute;
-      top: 52px;
-      right: 14px;
-      background: rgba(56, 189, 248, 0.2);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      pointer-events: none;
-      backdrop-filter: blur(4px);
-    }
-
-    .braid-controls {
-  pointer-events: auto;
-  background: rgba(15, 23, 42, 0.88);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
   gap: 10px;
 }
 
-    .top-row {
-  display: flex;
+footer a {
+  color: #64748b;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
 }
 
-    .pos-selector {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-size: 12px;
-      color: #cbd5e1;
-    }
-
-   .pos-btn {
-  width: 38px;
-  height: 38px;
-  font-size: 15px;
-  font-weight: bold;
-  background: rgba(51, 65, 85, 0.8);
-  color: #e2e8f0;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  flex-shrink: 0;
+footer a:hover {
+  color: #0f172a;
+  text-decoration: underline;
 }
 
-.pos-btn.active {
-  background: #00a8ff;
-  color: #ffffff;
-  border-color: #0097e6;
-  box-shadow: 0 0 8px rgba(0, 168, 255, 0.5);
+.github-icon {
+  width: 16px;
+  height: 16px;
+  fill: #64748b;
+  transition: fill 0.2s ease, transform 0.2s ease;
 }
 
-    .gen-row {
-      display: flex;
-      justify-content: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .braid-gen-btn {
-      padding: 6px 12px;
-      font-size: 13px;
-      font-weight: bold;
-      background: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: transform 0.1s, background 0.2s;
-    }
-
-    .braid-gen-btn:hover {
-      background: #2563eb;
-      transform: translateY(-1px);
-    }
-
-    .braid-gen-btn.inv {
-      background: #8b5cf6;
-    }
-
-    .braid-gen-btn.inv:hover {
-      background: #7c3aed;
-    }
-
-    .gen-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+.github-link:hover .github-icon {
+  fill: #0f172a;
+  transform: scale(1.15);
 }
 
-.braid-gen-btn {
-  padding: 8px 0;
-  font-size: 15px;
-  font-weight: bold;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 0.1s, background 0.2s;
-}
-
-.braid-gen-btn:hover {
-  background: #2563eb;
-  transform: translateY(-1px);
-}
-
-.braid-gen-btn.inv {
-  background: #8b5cf6;
-}
-
-.braid-gen-btn.inv:hover {
-  background: #7c3aed;
-}
-
-    .action-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 6px;
-  margin-top: 2px;
-}
-
-.braid-act-btn {
-  flex: 1;
-  padding: 6px 0;
-  font-size: 11px;
-  font-weight: 600;
-  background: rgba(51, 65, 85, 0.9);
-  color: #f1f5f9;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.braid-act-btn.danger {
-  background: rgba(225, 29, 72, 0.85);
-}
-
-.braid-act-btn:hover {
-  filter: brightness(1.15);
-}
-
-   
-
-    .braid-info {
-      font-size: 11px;
-      color: #94a3b8;
-      display: flex;
-      justify-content: space-around;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      padding-top: 4px;
-    }
-
-    .section-5 {
-      grid-column: 3;
-      grid-row: 1;
-      background: #353b48;
-      border: 2px solid #718093;
-      border-radius: 8px;
-      padding: 15px;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-    }
-
-    .deck-slot {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .slot-label {
-      font-size: 12px;
-      color: #dcdde1;
-      font-weight: 600;
-    }
-
-    .section-6 {
-      grid-column: 3;
-      grid-row: 2;
-      background: #353b48;
-      border: 2px solid #718093;
-      border-radius: 8px;
-      padding: 15px;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-    }
-
-    .component-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-
-    #dice-canvas-container {
-      width: 140px;
-      height: 140px;
-    }
-
-    .dice-result-label {
-      margin-top: 6px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #38bdf8;
-      min-height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .coin-wrapper { perspective: 1000px; }
-
-    .coin {
-      width: 75px;
-      height: 75px;
-      position: relative;
-      transform-style: preserve-3d;
-      transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      cursor: pointer;
-    }
-
-    .coin-face {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      backface-visibility: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 32px;
-      font-weight: bold;
-      color: #1e272e;
-      background: radial-gradient(circle, #fbc531 0%, #e1b12c 100%);
-      border: 4px solid #f5cd79;
-      box-shadow: inset 0 0 8px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3);
-    }
-
-    .coin-back { transform: rotateY(180deg); }
-
-    /* Mobile Optimization */
-    @media (max-width: 768px) {
+    /* Mobile Responsiveness */
+    @media (max-width: 600px) {
       body {
-        height: auto;
-        overflow-y: auto;
+        padding-top: 20px;
       }
 
-      .game-board {
-        display: flex;
+      .main-container {
+        margin-top: 0;
+        gap: 30px;
+      }
+
+      .logo-container img {
+        max-width: 300px;
+      }
+
+      .nav-buttons {
         flex-direction: column;
-        height: auto;
-        padding: 8px;
-        gap: 16px;
+        width: 100%;
+        max-width: 240px;
       }
 
-      .left-panel, .section-4, .section-5, .section-6 {
+      .btn {
         width: 100%;
       }
 
-      .section-4 {
-        height: 480px;
-        min-height: 450px;
-      }
-
-      .braid-controls {
-        padding: 8px;
-        gap: 6px;
-      }
-
-      .braid-gen-btn {
-        padding: 8px 12px;
-        font-size: 14px;
-        min-width: 44px;
-      }
-
-      .pos-selector {
-        flex-wrap: wrap;
-      }
-
-      .hand-container {
-        min-height: 100px;
-      }
-
-      .card, .card-deck, .card-placeholder {
-        width: 65px;
-        height: 90px;
-      }
-
-      .modal {
-        width: 90%;
-        max-width: 360px;
-        padding: 20px 15px;
-      }
-
-      .btn-group {
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .btn-player {
-        width: 100%;
-        padding: 14px;
+      footer {
+        position: static;
+        margin-top: 50px;
+        text-align: center;
       }
     }
   </style>
-
-  <!-- Three.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-  <!-- Modal -->
-  <div id="modal-overlay">
-    <div class="modal">
-      <h2>Select Number of Players</h2>
-      <div class="btn-group">
-        <button class="btn-player" onclick="initGame(1)">1 Player</button>
-        <button class="btn-player" onclick="initGame(2)">2 Players</button>
-        <button class="btn-player" onclick="initGame(3)">3 Players</button>
-      </div>
+  <main class="main-container">
+    <!-- Center Logo (media/logo.png) -->
+    <div class="logo-container">
+      <img src="media/logo.png" alt="Braid Game Logo">
+    </div>
+
+    <!-- Navigation Buttons -->
+    <nav class="nav-buttons">
+      <!-- 1. Tutorial Button with Info Icon -->
+      <button class="btn" onclick="openTutorial()">
+        <svg class="btn-icon" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9"></circle>
+          <line x1="12" y1="17" x2="12" y2="11"></line>
+          <line x1="12" y1="7" x2="12.01" y2="7"></line>
+        </svg>
+        <span>Tutorial</span>
+      </button>
+
+      <!-- 2. Play Button with Classic Play Triangle -->
+      <a href="game.html" class="btn">
+        <svg class="btn-icon filled" viewBox="0 0 24 24">
+          <polygon points="6,4 20,12 6,20"></polygon>
+        </svg>
+        <span>Play</span>
+      </a>
+
+      <!-- 3. Theory Button with Book/Theory Icon -->
+      <a href="braids.html" class="btn">
+        <svg class="btn-icon" viewBox="0 0 24 24">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        <span>Theory</span>
+      </a>
+    </nav>
+  </main>
+
+  <!-- Tutorial Modal Overlay -->
+  <div id="tutorial-modal" class="modal-overlay" onclick="handleOverlayClick(event)">
+    <div class="modal-card">
+      <h2>Tutorial</h2>
+      <p>Welcome to Braid Game! Learn how to combine braid generators (&sigma;<sub>i</sub>), simplify words using relations, and manipulate strands in 3D space.</p>
+      <button class="modal-close-btn" onclick="closeTutorial()">Close</button>
     </div>
   </div>
 
-  <!-- Game Board -->
-  <div class="game-board">
-    
-    <!-- Left Panel: Players -->
-    <div class="left-panel">
-      <div class="player-slot" id="player-slot-1">
-        <div class="player-header">
-          <h3>Player 1</h3>
-          <button class="turn-btn" onclick="setActivePlayer(1)">Set Turn</button>
-        </div>
-        <div class="hand-container" id="hand-1"></div>
-      </div>
+  <!-- Bottom-Right Copyright Footer -->
+<footer>
+  <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer">
+    Creative Commons Attribution-NonCommercial 4.0 International License
+  </a>
+  <a href="https://github.com/tuo-username/tuo-repo" target="_blank" rel="noopener noreferrer" class="github-link" title="GitHub Repository">
+    <svg class="github-icon" viewBox="0 0 24 24">
+      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+    </svg>
+  </a>
+</footer>
 
-      <div class="player-slot" id="player-slot-2">
-        <div class="player-header">
-          <h3>Player 2</h3>
-          <button class="turn-btn" onclick="setActivePlayer(2)">Set Turn</button>
-        </div>
-        <div class="hand-container" id="hand-2"></div>
-      </div>
-
-      <div class="player-slot" id="player-slot-3">
-        <div class="player-header">
-          <h3>Player 3</h3>
-          <button class="turn-btn" onclick="setActivePlayer(3)">Set Turn</button>
-        </div>
-        <div class="hand-container" id="hand-3"></div>
-      </div>
-    </div>
-
-   <!-- Section 4: Vertical 3D Braid -->
-<div class="section-4" id="section-4">
-  <div id="braid-canvas-container"></div>
-  
-  <div class="braid-ui">
-    <div class="braid-controls">
-      
-
-      <div class="top-row">
-        <button id="pos-top-btn" class="pos-btn" onclick="setInsertPosition('top')" title="Top (Start)">T</button>
-        <div class="braid-word-box">
-          <span class="braid-word" id="braidLabel">e</span>
-        </div>
-        <button id="pos-bottom-btn" class="pos-btn active" onclick="setInsertPosition('bottom')" title="Bottom (End)">B</button>
-      </div>
-
-
-      <div class="info-row">
-        <div class="info-badge">Length: <b id="wordLengthVal">0</b></div>
-        <div class="info-badge">Perm: <b id="permutationVal">(1)(2)(3)(4)</b></div>
-      </div>
-
-  
-      <div class="gen-grid">
-        <button class="braid-gen-btn" onclick="addGenerator(1, 1)">σ₁</button>
-        <button class="braid-gen-btn" onclick="addGenerator(2, 1)">σ₂</button>
-        <button class="braid-gen-btn" onclick="addGenerator(3, 1)">σ₃</button>
-        
-        <button class="braid-gen-btn inv" onclick="addGenerator(1, -1)">σ₁⁻¹</button>
-        <button class="braid-gen-btn inv" onclick="addGenerator(2, -1)">σ₂⁻¹</button>
-        <button class="braid-gen-btn inv" onclick="addGenerator(3, -1)">σ₃⁻¹</button>
-      </div>
-
-    
-      <div class="action-row">
-        <button class="braid-act-btn" onclick="undoGenerator()">Undo</button>
-        <button class="braid-act-btn" onclick="normalizeBraid()">Simplify</button>
-        <button class="braid-act-btn danger" onclick="resetBraid()">Reset</button>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-    <!-- Section 5: Draw Deck & Discard Pile -->
-    <div class="section-5">
-      <div class="deck-slot">
-        <span class="slot-label">Draw Deck</span>
-        <div id="draw-deck-slot" class="card-deck" onclick="drawCard()">
-          <span>DECK</span>
-          <small id="deck-count">210</small>
-        </div>
-      </div>
-      <div class="deck-slot">
-        <span class="slot-label">Discard Pile (<span id="discard-count">0</span>)</span>
-        <div id="played-card-slot" class="card-placeholder" onclick="reshuffleDiscard()">
-          Empty
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 6: D6 Dice & D2 Coin -->
-    <div class="section-6">
-      <div class="component-box">
-        <span class="slot-label">Dice</span>
-        <div id="dice-canvas-container"></div>
-        <div id="dice-result-label" class="dice-result-label">$\sigma_1$</div>
-      </div>
-      <div class="component-box">
-        <span class="slot-label">Coin</span>
-        <div class="coin-wrapper" onclick="flipCoin()">
-          <div class="coin" id="coin">
-            <div class="coin-face coin-front">B</div>
-            <div class="coin-face coin-back">T</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- External Scripts -->
-  <script src="deck/cards.js"></script>
-  <script src="dice/dice.js"></script>
-  <script src="braid/braid.js"></script>
-
-  <!-- Game Logic & Vertical 3D Braid Visualizer -->
   <script>
-    let totalPlayers = 3;
-    let activePlayer = 1;
-
-    function initGame(num) {
-      totalPlayers = num;
-      document.getElementById('modal-overlay').style.display = 'none';
-
-      for (let i = 1; i <= 3; i++) {
-        const slot = document.getElementById(`player-slot-${i}`);
-        if (i > totalPlayers) {
-          slot.classList.add('disabled');
-        } else {
-          slot.classList.remove('disabled');
-        }
-      }
-
-      if (typeof initDeckSystem === 'function') initDeckSystem();
-      setActivePlayer(1);
+    function openTutorial() {
+      document.getElementById('tutorial-modal').classList.add('active');
     }
 
-    function setActivePlayer(num) {
-      if (num > totalPlayers) return;
-      activePlayer = num;
-      for (let i = 1; i <= totalPlayers; i++) {
-        const slot = document.getElementById(`player-slot-${i}`);
-        if (i === num) {
-          slot.classList.add('active-turn');
-        } else {
-          slot.classList.remove('active-turn');
-        }
-      }
+    function closeTutorial() {
+      document.getElementById('tutorial-modal').classList.remove('active');
     }
 
-    // D2 Coin Flip
-    let currentCoinRotation = 0;
-    function flipCoin() {
-      const coin = document.getElementById('coin');
-      const isH = Math.random() < 0.5;
-      const extraFlips = (Math.floor(Math.random() * 5) + 5) * 360; 
-      const targetAngle = isH ? 0 : 180;
-      
-      currentCoinRotation += extraFlips + targetAngle - (currentCoinRotation % 360);
-      coin.style.transform = `rotateY(${currentCoinRotation}deg)`;
+    function handleOverlayClick(event) {
+      if (event.target.classList.contains('modal-overlay')) {
+        closeTutorial();
+      }
     }
   </script>
 
-
-  <script>
-    const diceFaceMap = {
-      1: '\\sigma_1',
-      2: '\\sigma_1^{-1}',
-      3: '\\sigma_2',
-      4: '\\sigma_2^{-1}',
-      5: '\\sigma_3',
-      6: '\\sigma_3^{-1}'
-    };
-
-    function updateDiceResult(faceNumber) {
-      const labelEl = document.getElementById('dice-result-label');
-      const latexFormula = diceFaceMap[faceNumber] || '\\sigma_1';
-      labelEl.innerHTML = `$${latexFormula}$`;
-
-      if (window.MathJax && MathJax.typesetPromise) {
-        MathJax.typesetPromise([labelEl]);
-      }
-    }
-  </script>
 </body>
 </html>
