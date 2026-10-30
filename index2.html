@@ -250,18 +250,18 @@
     }
 
     .braid-ui {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 10;
-      pointer-events: none;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 12px;
-    }
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 12px;
+}
 
     .braid-header {
       pointer-events: auto;
@@ -281,12 +281,52 @@
       color: #f8fafc;
     }
 
-    .braid-word {
-      font-size: 15px;
-      font-weight: bold;
-      color: #38bdf8;
-      font-family: monospace;
-    }
+    .braid-word-box {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 6px 12px;
+  text-align: center;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.braid-word {
+  font-size: 16px;
+  font-weight: bold;
+  color: #38bdf8;
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+    .info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.info-badge {
+  flex: 1;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+    .info-badge b {
+  color: #f8fafc;
+}
+    
 
     .scroll-hint {
       position: absolute;
@@ -304,16 +344,22 @@
     }
 
     .braid-controls {
-      pointer-events: auto;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 10px;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+  pointer-events: auto;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+    .top-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
     .pos-selector {
       display: flex;
@@ -324,24 +370,29 @@
       color: #cbd5e1;
     }
 
-    .pos-btn {
-      padding: 4px 10px;
-      font-size: 12px;
-      font-weight: 600;
-      background: rgba(51, 65, 85, 0.8);
-      color: #e2e8f0;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
+   .pos-btn {
+  width: 38px;
+  height: 38px;
+  font-size: 15px;
+  font-weight: bold;
+  background: rgba(51, 65, 85, 0.8);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
 
-    .pos-btn.active {
-      background: #00a8ff;
-      color: #ffffff;
-      border-color: #0097e6;
-      box-shadow: 0 0 8px rgba(0, 168, 255, 0.5);
-    }
+.pos-btn.active {
+  background: #00a8ff;
+  color: #ffffff;
+  border-color: #0097e6;
+  box-shadow: 0 0 8px rgba(0, 168, 255, 0.5);
+}
 
     .gen-row {
       display: flex;
@@ -375,30 +426,65 @@
       background: #7c3aed;
     }
 
+    .gen-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.braid-gen-btn {
+  padding: 8px 0;
+  font-size: 15px;
+  font-weight: bold;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.2s;
+}
+
+.braid-gen-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.braid-gen-btn.inv {
+  background: #8b5cf6;
+}
+
+.braid-gen-btn.inv:hover {
+  background: #7c3aed;
+}
+
     .action-row {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-    }
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 2px;
+}
 
-    .braid-act-btn {
-      padding: 5px 12px;
-      font-size: 11px;
-      font-weight: 600;
-      background: rgba(51, 65, 85, 0.9);
-      color: #f1f5f9;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 6px;
-      cursor: pointer;
-    }
+.braid-act-btn {
+  flex: 1;
+  padding: 6px 0;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(51, 65, 85, 0.9);
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+}
 
-    .braid-act-btn.danger {
-      background: rgba(225, 29, 72, 0.85);
-    }
+.braid-act-btn.danger {
+  background: rgba(225, 29, 72, 0.85);
+}
 
-    .braid-act-btn:hover {
-      filter: brightness(1.15);
-    }
+.braid-act-btn:hover {
+  filter: brightness(1.15);
+}
+
+   
 
     .braid-info {
       font-size: 11px;
