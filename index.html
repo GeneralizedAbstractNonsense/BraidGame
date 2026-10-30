@@ -907,41 +907,45 @@
     }
 
     // Gestione dello scorrimento manuale
-    sectionContainer.addEventListener('wheel', (e) => {
-      const maxScroll = getMaxScroll();
-      if (maxScroll <= 0) return;
-      e.preventDefault();
-      targetScrollOffset += e.deltaY * 0.005;
-      targetScrollOffset = Math.max(0, Math.min(maxScroll, targetScrollOffset));
-    }, { passive: false });
+sectionContainer.addEventListener('wheel', (e) => {
+  if (e.target.closest('.braid-controls')) return; // Ignora se si scolla sopra i controlli
+  const maxScroll = getMaxScroll();
+  if (maxScroll <= 0) return;
+  e.preventDefault();
+  targetScrollOffset += e.deltaY * 0.005;
+  targetScrollOffset = Math.max(0, Math.min(maxScroll, targetScrollOffset));
+}, { passive: false });
 
-    let isDragging = false;
-    let startY = 0;
-    let startScroll = 0;
+let isDragging = false;
+let startY = 0;
+let startScroll = 0;
 
-    sectionContainer.addEventListener('pointerdown', (e) => {
-      if (getMaxScroll() <= 0) return;
-      isDragging = true;
-      startY = e.clientY;
-      startScroll = targetScrollOffset;
-      sectionContainer.setPointerCapture(e.pointerId);
-    });
+sectionContainer.addEventListener('pointerdown', (e) => {
+  // SE IL CLICK AVVIENE SULLA UI (PULSANTI/CONTROLLI), NON CATTURARE IL POINTER
+  if (e.target.closest('.braid-ui')) return;
 
-    sectionContainer.addEventListener('pointermove', (e) => {
-      if (!isDragging) return;
-      const deltaY = e.clientY - startY;
-      targetScrollOffset = startScroll - deltaY * 0.015;
-      targetScrollOffset = Math.max(0, Math.min(getMaxScroll(), targetScrollOffset));
-    });
+  if (getMaxScroll() <= 0) return;
+  isDragging = true;
+  startY = e.clientY;
+  startScroll = targetScrollOffset;
+  sectionContainer.setPointerCapture(e.pointerId);
+});
 
-    sectionContainer.addEventListener('pointerup', (e) => {
-      if (isDragging) {
-        isDragging = false;
-        try { sectionContainer.releasePointerCapture(e.pointerId); } catch(err){}
-      }
-    });
+sectionContainer.addEventListener('pointermove', (e) => {
+  if (!isDragging) return;
+  const deltaY = e.clientY - startY;
+  targetScrollOffset = startScroll - deltaY * 0.015;
+  targetScrollOffset = Math.max(0, Math.min(getMaxScroll(), targetScrollOffset));
+});
 
-    sectionContainer.addEventListener('pointercancel', () => { isDragging = false; });
+sectionContainer.addEventListener('pointerup', (e) => {
+  if (isDragging) {
+    isDragging = false;
+    try { sectionContainer.releasePointerCapture(e.pointerId); } catch(err){}
+  }
+});
+
+sectionContainer.addEventListener('pointercancel', () => { isDragging = false; });
 
     function setInsertPosition(pos) {
       insertPosition = pos;
