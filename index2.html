@@ -749,22 +749,24 @@
     ------------------------------------------------------------- */
     const STRAND_COLORS = [0x008b00, 0x1600ff, 0xfdff00, 0xff0000];
     const STRAND_POSITIONS_X = [-2.25, -0.75, 0.75, 2.25];
-    const STEP_HEIGHT = 2.25; // Altezza per mossa
-    const EXTENSION_LENGTH = 100; // Estensione infinita per fili dritti
+    const STEP_HEIGHT = 2.25; 
+    const EXT_SPAN = 12; // Estensione bilanciata per la vista WebGL
     const DISC_Y_TOP = 4.5;
 
     let braidWord = [];
     let insertPosition = 'bottom';
     let animatedProgress = 1.0;
     let isAnimating = false;
+    
     let scrollOffset = 0;
+    let targetScrollOffset = 0;
 
     const canvasContainer = document.getElementById('braid-canvas-container');
     const sectionContainer = document.getElementById('section-4');
+    const scrollHintEl = document.getElementById('scroll-hint');
     const braidScene = new THREE.Scene();
 
-    // Far plane esteso a 2000 per visualizzare i fili infiniti
-    const braidCamera = new THREE.PerspectiveCamera(45, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 2000);
+    const braidCamera = new THREE.PerspectiveCamera(45, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 500);
     braidCamera.position.set(0, 0, 14);
     braidCamera.lookAt(0, 0, 0);
 
@@ -773,10 +775,8 @@
     braidRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     canvasContainer.appendChild(braidRenderer.domElement);
 
-    // Illuminazione
     braidScene.add(new THREE.AmbientLight(0xffffff, 1.2));
 
-    // Mesh dei fili della treccia
     const strandMeshes = [];
     for (let i = 0; i < 4; i++) {
       const strandMat = new THREE.MeshStandardMaterial({
@@ -789,47 +789,49 @@
       strandMeshes.push(strandMesh);
     }
 
-    // Scorrimento massimo consentito (sbloccato da >= 4 mosse)
+    // Attivazione dello scorrimento a partire da almeno 4 mosse (numSteps >= 4)
     function getMaxScroll() {
       const numSteps = braidWord.length;
-      return numSteps >= 4 ? (numSteps - 4) * STEP_HEIGHT : 0;
+      return numSteps >= 4 ? (numSteps - 2.5) * STEP_HEIGHT : 0;
     }
 
-    function updateCameraScroll(targetScroll = null) {
+    function updateCameraScroll() {
       const maxScroll = getMaxScroll();
-      if (targetScroll !== null) {
-        scrollOffset = targetScroll;
-      }
-      scrollOffset = Math.max(0, Math.min(maxScroll, scrollOffset));
+      targetScrollOffset = Math.max(0, Math.min(maxScroll, targetScrollOffset));
       
       braidCamera.position.y = -scrollOffset;
       braidCamera.lookAt(0, -scrollOffset, 0);
 
-      const scrollHint = document.getElementById('scroll-hint');
-      if (scrollHint) {
-        scrollHint.style.display = maxScroll > 0 ? 'block' : 'none';
+      if (scrollHintEl) {
+        scrollHintEl.style.display = maxScroll > 0 ? 'block' : 'none';
       }
     }
 
-    // Calcolo delle curve trasversali infinite per la treccia
+    function autoFocusLastMove() {
+      if (insertPosition === 'top') {
+        targetScrollOffset = 0;
+      } else {
+        targetScrollOffset = getMaxScroll();
+      }
+    }
+
     function computeStrandCurves(word, tAnim = 1.0) {
       const numSteps = word.length;
       const strandPaths = [[], [], [], []];
       let currentPermutation = [0, 1, 2, 3];
 
       const topY = DISC_Y_TOP;
-      const topExtensionY = topY + EXTENSION_LENGTH;
+      const topExtensionY = topY + EXT_SPAN;
 
-      // 1. Estensione infinita verso l'alto
+      // Estensione superiore
       for (let s = 0; s < 4; s++) {
         strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], topExtensionY, 0));
         strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], topY, 0));
       }
 
-      // 2. Intrecci centrali
       if (numSteps === 0) {
         const bottomY = topY - 4 * STEP_HEIGHT;
-        const bottomExtensionY = bottomY - EXTENSION_LENGTH;
+        const bottomExtensionY = bottomY - EXT_SPAN;
         for (let s = 0; s < 4; s++) {
           strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], bottomY, 0));
           strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], bottomExtensionY, 0));
@@ -882,12 +884,13 @@
           }
         }
 
-        // 3. Estensione infinita verso il basso
+        // Estensione inferiore
         const finalY = topY - numSteps * STEP_HEIGHT;
-        const bottomExtensionY = finalY - EXTENSION_LENGTH;
+        const bottomExtensionY = finalY - EXT_SPAN;
         for (let pos = 0; pos < 4; pos++) {
           const st = currentPermutation[pos];
           const x = STRAND_POSITIONS_X[pos];
+          strandPaths[st].push(new THREE.Vector3(x, finalY, 0));
           strandPaths[st].push(new THREE.Vector3(x, bottomExtensionY, 0));
         }
       }
@@ -900,20 +903,21 @@
 
       for (let s = 0; s < 4; s++) {
         const points = strandPaths[s];
-        const curve = new THREE.CatmullRomCurve3(points);
+        // Centripetal stabilisce l'interpolazione senza creare tangenti nulle/infinite
+        const curve = new THREE.CatmullRomCurve3(points, false, 'centripetal');
         
         if (strandMeshes[s].geometry) strandMeshes[s].geometry.dispose();
-        strandMeshes[s].geometry = new THREE.TubeGeometry(curve, points.length * 2, 0.14, 16, false);
+        strandMeshes[s].geometry = new THREE.TubeGeometry(curve, Math.max(20, points.length * 2), 0.14, 16, false);
       }
     }
 
-    // Gestione dello scorrimento (Mouse Wheel e Touch/Pointer Drag)
+    // Gestione dello scorrimento con supporto sicuro Pointer Capture su Gecko/macOS
     sectionContainer.addEventListener('wheel', (e) => {
       const maxScroll = getMaxScroll();
       if (maxScroll <= 0) return;
       e.preventDefault();
-      scrollOffset += e.deltaY * 0.005;
-      updateCameraScroll();
+      targetScrollOffset += e.deltaY * 0.005;
+      targetScrollOffset = Math.max(0, Math.min(maxScroll, targetScrollOffset));
     }, { passive: false });
 
     let isDragging = false;
@@ -924,21 +928,27 @@
       if (getMaxScroll() <= 0) return;
       isDragging = true;
       startY = e.clientY;
-      startScroll = scrollOffset;
-      sectionContainer.setPointerCapture(e.pointerId);
+      startScroll = targetScrollOffset;
+      try {
+        sectionContainer.setPointerCapture(e.pointerId);
+      } catch (err) {
+        // Ignora eccezioni su Gecko/macOS dove setPointerCapture non è supportato su pointer events del trackpad
+      }
     });
 
     sectionContainer.addEventListener('pointermove', (e) => {
       if (!isDragging) return;
       const deltaY = e.clientY - startY;
-      scrollOffset = startScroll - deltaY * 0.015;
-      updateCameraScroll();
+      targetScrollOffset = startScroll - deltaY * 0.015;
+      targetScrollOffset = Math.max(0, Math.min(getMaxScroll(), targetScrollOffset));
     });
 
     sectionContainer.addEventListener('pointerup', (e) => {
       if (isDragging) {
         isDragging = false;
-        try { sectionContainer.releasePointerCapture(e.pointerId); } catch(err){}
+        try {
+          sectionContainer.releasePointerCapture(e.pointerId);
+        } catch (err) {}
       }
     });
 
@@ -948,6 +958,7 @@
       insertPosition = pos;
       document.getElementById('pos-top-btn').classList.toggle('active', pos === 'top');
       document.getElementById('pos-bottom-btn').classList.toggle('active', pos === 'bottom');
+      autoFocusLastMove();
     }
 
     function addGenerator(index, sign) {
@@ -955,17 +966,13 @@
       const gen = { index, sign };
       if (insertPosition === 'top') {
         braidWord.unshift(gen);
-        isAnimating = true;
-        animatedProgress = 0.0;
-        updateUI();
-        updateCameraScroll(0);
       } else {
         braidWord.push(gen);
-        isAnimating = true;
-        animatedProgress = 0.0;
-        updateUI();
-        updateCameraScroll(getMaxScroll());
       }
+      isAnimating = true;
+      animatedProgress = 0.0;
+      updateUI();
+      autoFocusLastMove();
     }
 
     function undoGenerator() {
@@ -978,15 +985,17 @@
       isAnimating = true;
       animatedProgress = 0.0;
       updateUI();
-      updateCameraScroll();
+      autoFocusLastMove();
     }
 
     function resetBraid() {
       braidWord = [];
       animatedProgress = 1.0;
       isAnimating = false;
+      targetScrollOffset = 0;
+      scrollOffset = 0;
       updateUI();
-      updateCameraScroll(0);
+      updateCameraScroll();
       updateBraidGeometries();
     }
 
@@ -1063,7 +1072,7 @@
         isAnimating = true;
         animatedProgress = 0.0;
         updateUI();
-        updateCameraScroll();
+        autoFocusLastMove();
       }
     }
 
@@ -1104,6 +1113,14 @@
       const deltaTime = (currentTime - lastTime) / 1000;
       lastTime = currentTime;
 
+      if (Math.abs(scrollOffset - targetScrollOffset) > 0.001) {
+        scrollOffset += (targetScrollOffset - scrollOffset) * 0.15;
+        updateCameraScroll();
+      } else if (scrollOffset !== targetScrollOffset) {
+        scrollOffset = targetScrollOffset;
+        updateCameraScroll();
+      }
+
       if (isAnimating) {
         animatedProgress += deltaTime * 2.8;
         if (animatedProgress >= 1.0) {
@@ -1127,7 +1144,7 @@
 
     // Inizializzazione
     updateUI();
-    updateCameraScroll(0);
+    autoFocusLastMove();
     updateBraidGeometries();
     animateBraid(performance.now());
   </script>
