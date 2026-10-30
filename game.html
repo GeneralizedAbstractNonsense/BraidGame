@@ -45,15 +45,23 @@
       flex-shrink: 0;
     }
 
-    .brand-title {
-      font-size: 18px;
-      font-weight: 800;
-      color: #1e293b;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .brand-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.brand-logo img {
+  height: 32px; 
+  width: auto;
+  display: block;
+  user-select: none;
+  transition: transform 0.15s ease;
+}
+
+.brand-logo img:hover {
+  transform: scale(1.05);
+}
 
     .header-actions {
       display: flex;
@@ -61,7 +69,7 @@
       gap: 10px;
     }
 
-    /* Hand-drawn / Pencil Button */
+
     .btn-pencil {
       display: inline-flex;
       align-items: center;
@@ -308,20 +316,20 @@
     }
 
     /* Section 4: Vertical 3D Braid */
-    .section-4 {
-      grid-column: 2;
-      grid-row: 1 / span 2;
-      background: #0f172a;
-      border: 2.5px solid #1e293b;
-      border-radius: 12px;
-      box-shadow: 3px 3px 0px #1e293b;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      touch-action: none;
-      user-select: none;
-    }
+     .section-4 {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  background: #0f172a; 
+  border: 2.5px solid #1e293b;
+  border-radius: 12px;
+  box-shadow: 3px 3px 0px #1e293b;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  touch-action: none;
+  user-select: none;
+}
 
     #braid-canvas-container {
       width: 100%;
@@ -602,21 +610,22 @@
 <body>
 
   <!-- Top Navigation Header -->
-  <header class="top-header">
-    <a href="index.html" class="brand-title">
-      &larr; Braid Game
-    </a>
-    <div class="header-actions">
-      <button class="btn-pencil" onclick="openTutorial()">
-        <svg class="btn-icon" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="9"></circle>
-          <line x1="12" y1="17" x2="12" y2="11"></line>
-          <line x1="12" y1="7" x2="12.01" y2="7"></line>
-        </svg>
-        Tutorial
-      </button>
-    </div>
-  </header>
+ <!-- Top Navigation Header -->
+<header class="top-header">
+  <a href="index.html" class="brand-logo" title="Back to Home">
+    <img src="media/logo.png" alt="Braid Game Logo">
+  </a>
+  <div class="header-actions">
+    <button class="btn-pencil" onclick="openTutorial()">
+      <svg class="btn-icon" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9"></circle>
+        <line x1="12" y1="17" x2="12" y2="11"></line>
+        <line x1="12" y1="7" x2="12.01" y2="7"></line>
+      </svg>
+      Tutorial
+    </button>
+  </div>
+</header>
 
   <!-- Player Selection Modal Overlay -->
   <div id="modal-overlay" class="modal-overlay active">
