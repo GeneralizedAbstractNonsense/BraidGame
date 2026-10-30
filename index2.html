@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BraidGame</title>
+  
+  <script>
+    MathJax = {
+      tex: { inlineMath: [['$', '$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #1e272e;
+      color: #f5f6fa;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Modal */
+    #modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal {
+      background: #2f3640;
+      padding: 30px 40px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      border: 1px solid #718093;
+    }
+
+    .modal h2 { margin-bottom: 20px; color: #f5f6fa; }
+
+    .btn-group {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    .btn-player {
+      padding: 12px 24px;
+      font-size: 18px;
+      font-weight: bold;
+      background: #00a8ff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-player:hover {
+      background: #0097e6;
+      transform: translateY(-2px);
+    }
+
+    /* Main Grid Layout */
+    .game-board {
+      display: grid;
+      grid-template-columns: 340px 1fr 360px;
+      grid-template-rows: 1fr 1fr;
+      gap: 12px;
+      height: 100vh;
+      padding: 12px;
+    }
+
+    .left-panel {
+      grid-column: 1;
+      grid-row: 1 / span 2;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .player-slot {
+      flex: 1;
+      background: #353b48;
+      border: 2px solid #718093;
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.3s, background-color 0.3s;
+    }
+
+    .player-slot.active-turn {
+      border-color: #4cd137;
+      background: #2d383c;
+      box-shadow: inset 0 0 10px rgba(76, 209, 55, 0.2);
+    }
+
+    .player-slot.disabled {
+      opacity: 0.35;
+      pointer-events: none;
+      filter: grayscale(80%);
+    }
+
+    .player-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .player-header h3 { font-size: 15px; color: #f5f6fa; }
+
+    .turn-btn {
+      padding: 4px 10px;
+      font-size: 12px;
+      background: #487eb0;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .turn-btn:hover { background: #40739e; }
+
+    .hand-container {
+      flex: 1;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      overflow-x: auto;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 6px;
+      min-height: 110px;
+    }
+
+    .card {
+      width: 75px;
+      height: 105px;
+      background: #f8f9fa;
+      color: #1e272e;
+      border: 2px solid #2f3640;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+      flex-shrink: 0;
+      padding: 4px;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 10px 16px rgba(0,0,0,0.5);
+    }
+
+    .card.jolly-card {
+      background: linear-gradient(135deg, #f1c40f, #e67e22);
+      color: #ffffff;
+      border-color: #f39c12;
+      font-weight: bold;
+    }
+
+    .card svg {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .card-deck {
+      width: 75px;
+      height: 105px;
+      background: linear-gradient(135deg, #e1b12c, #e67e22);
+      border: 2px solid #f5f6fa;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      user-select: none;
+      position: relative;
+    }
+
+    .card-deck small {
+      margin-top: 4px;
+      font-size: 11px;
+      background: rgba(0,0,0,0.3);
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+
+    .card-placeholder {
+      width: 75px;
+      height: 105px;
+      border: 2px dashed #718093;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #718093;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    /* Section 4: Vertical 3D Braid */
+    .section-4 {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      background: #090d16;
+      border: 2px solid #718093;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      touch-action: none;
+      user-select: none;
+    }
+
+    #braid-canvas-container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    .braid-ui {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12px;
+    }
+
+    .braid-header {
+      pointer-events: auto;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .braid-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #f8fafc;
+    }
+
+    .braid-word {
+      font-size: 15px;
+      font-weight: bold;
+      color: #38bdf8;
+      font-family: monospace;
+    }
+
+    .scroll-hint {
+      position: absolute;
+      top: 52px;
+      right: 14px;
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+    }
+
+    .braid-controls {
+      pointer-events: auto;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .pos-selector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+
+    .pos-btn {
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(51, 65, 85, 0.8);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pos-btn.active {
+      background: #00a8ff;
+      color: #ffffff;
+      border-color: #0097e6;
+      box-shadow: 0 0 8px rgba(0, 168, 255, 0.5);
+    }
+
+    .gen-row {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .braid-gen-btn {
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: bold;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.2s;
+    }
+
+    .braid-gen-btn:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+
+    .braid-gen-btn.inv {
+      background: #8b5cf6;
+    }
+
+    .braid-gen-btn.inv:hover {
+      background: #7c3aed;
+    }
+
+    .action-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .braid-act-btn {
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(51, 65, 85, 0.9);
+      color: #f1f5f9;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .braid-act-btn.danger {
+      background: rgba(225, 29, 72, 0.85);
+    }
+
+    .braid-act-btn:hover {
+      filter: brightness(1.15);
+    }
+
+    .braid-info {
+      font-size: 11px;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-around;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 4px;
+    }
+
+    .section-5 {
+      grid-column: 3;
+      grid-row: 1;
+      background: #353b48;
+      border: 2px solid #718093;
+      border-radius: 8px;
+      padding: 15px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+
+    .deck-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .slot-label {
+      font-size: 12px;
+      color: #dcdde1;
+      font-weight: 600;
+    }
+
+    .section-6 {
+      grid-column: 3;
+      grid-row: 2;
+      background: #353b48;
+      border: 2px solid #718093;
+      border-radius: 8px;
+      padding: 15px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+
+    .component-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #dice-canvas-container {
+      width: 140px;
+      height: 140px;
+    }
+
+    .dice-result-label {
+      margin-top: 6px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #38bdf8;
+      min-height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .coin-wrapper { perspective: 1000px; }
+
+    .coin {
+      width: 75px;
+      height: 75px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      cursor: pointer;
+    }
+
+    .coin-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      backface-visibility: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 32px;
+      font-weight: bold;
+      color: #1e272e;
+      background: radial-gradient(circle, #fbc531 0%, #e1b12c 100%);
+      border: 4px solid #f5cd79;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .coin-back { transform: rotateY(180deg); }
+
+    /* Mobile Optimization */
+    @media (max-width: 768px) {
+      body {
+        height: auto;
+        overflow-y: auto;
+      }
+
+      .game-board {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        padding: 8px;
+        gap: 16px;
+      }
+
+      .left-panel, .section-4, .section-5, .section-6 {
+        width: 100%;
+      }
+
+      .section-4 {
+        height: 480px;
+        min-height: 450px;
+      }
+
+      .braid-controls {
+        padding: 8px;
+        gap: 6px;
+      }
+
+      .braid-gen-btn {
+        padding: 8px 12px;
+        font-size: 14px;
+        min-width: 44px;
+      }
+
+      .pos-selector {
+        flex-wrap: wrap;
+      }
+
+      .hand-container {
+        min-height: 100px;
+      }
+
+      .card, .card-deck, .card-placeholder {
+        width: 65px;
+        height: 90px;
+      }
+
+      .modal {
+        width: 90%;
+        max-width: 360px;
+        padding: 20px 15px;
+      }
+
+      .btn-group {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .btn-player {
+        width: 100%;
+        padding: 14px;
+      }
+    }
+  </style>
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <!-- Modal -->
+  <div id="modal-overlay">
+    <div class="modal">
+      <h2>Select Number of Players</h2>
+      <div class="btn-group">
+        <button class="btn-player" onclick="initGame(1)">1 Player</button>
+        <button class="btn-player" onclick="initGame(2)">2 Players</button>
+        <button class="btn-player" onclick="initGame(3)">3 Players</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Board -->
+  <div class="game-board">
+    
+    <!-- Left Panel: Players -->
+    <div class="left-panel">
+      <div class="player-slot" id="player-slot-1">
+        <div class="player-header">
+          <h3>Player 1</h3>
+          <button class="turn-btn" onclick="setActivePlayer(1)">Set Turn</button>
+        </div>
+        <div class="hand-container" id="hand-1"></div>
+      </div>
+
+      <div class="player-slot" id="player-slot-2">
+        <div class="player-header">
+          <h3>Player 2</h3>
+          <button class="turn-btn" onclick="setActivePlayer(2)">Set Turn</button>
+        </div>
+        <div class="hand-container" id="hand-2"></div>
+      </div>
+
+      <div class="player-slot" id="player-slot-3">
+        <div class="player-header">
+          <h3>Player 3</h3>
+          <button class="turn-btn" onclick="setActivePlayer(3)">Set Turn</button>
+        </div>
+        <div class="hand-container" id="hand-3"></div>
+      </div>
+    </div>
+
+    <!-- Section 4: Vertical 3D Braid -->
+    <div class="section-4" id="section-4">
+      <div id="braid-canvas-container"></div>
+      
+      <div class="braid-ui">
+        <div class="braid-header">
+          <span class="braid-title">B₄ Braid Group (3D)</span>
+          <span class="braid-word" id="braidLabel">e</span>
+        </div>
+
+        <div id="scroll-hint" class="scroll-hint" style="display: none;">
+          ↕ Scorri verticale per navigare
+        </div>
+
+        <div class="braid-controls">
+          <div class="pos-selector">
+            <span>Insertion Position:</span>
+            <button id="pos-top-btn" class="pos-btn" onclick="setInsertPosition('top')">Top (Start)</button>
+            <button id="pos-bottom-btn" class="pos-btn active" onclick="setInsertPosition('bottom')">Bottom (End)</button>
+          </div>
+
+          <div class="gen-row">
+            <button class="braid-gen-btn" onclick="addGenerator(1, 1)">σ₁</button>
+            <button class="braid-gen-btn inv" onclick="addGenerator(1, -1)">σ₁⁻¹</button>
+            <button class="braid-gen-btn" onclick="addGenerator(2, 1)">σ₂</button>
+            <button class="braid-gen-btn inv" onclick="addGenerator(2, -1)">σ₂⁻¹</button>
+            <button class="braid-gen-btn" onclick="addGenerator(3, 1)">σ₃</button>
+            <button class="braid-gen-btn inv" onclick="addGenerator(3, -1)">σ₃⁻¹</button>
+          </div>
+
+          <div class="action-row">
+            <button class="braid-act-btn" onclick="undoGenerator()">Undo</button>
+            <button class="braid-act-btn" onclick="normalizeBraid()">Simplify</button>
+            <button class="braid-act-btn danger" onclick="resetBraid()">Reset</button>
+          </div>
+
+          <div class="braid-info">
+            <span>Length: <b id="wordLengthVal">0</b></span>
+            <span>Permutation: <b id="permutationVal">(1)(2)(3)(4)</b></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5: Draw Deck & Discard Pile -->
+    <div class="section-5">
+      <div class="deck-slot">
+        <span class="slot-label">Draw Deck</span>
+        <div id="draw-deck-slot" class="card-deck" onclick="drawCard()">
+          <span>DECK</span>
+          <small id="deck-count">210</small>
+        </div>
+      </div>
+      <div class="deck-slot">
+        <span class="slot-label">Discard Pile (<span id="discard-count">0</span>)</span>
+        <div id="played-card-slot" class="card-placeholder" onclick="reshuffleDiscard()">
+          Empty
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 6: D6 Dice & D2 Coin -->
+    <div class="section-6">
+      <div class="component-box">
+        <span class="slot-label">Dice</span>
+        <div id="dice-canvas-container"></div>
+        <div id="dice-result-label" class="dice-result-label">$\sigma_1$</div>
+      </div>
+      <div class="component-box">
+        <span class="slot-label">Coin</span>
+        <div class="coin-wrapper" onclick="flipCoin()">
+          <div class="coin" id="coin">
+            <div class="coin-face coin-front">B</div>
+            <div class="coin-face coin-back">T</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- External Scripts -->
+  <script src="deck/cards.js"></script>
+  <script src="dice/dice.js"></script>
+
+  <!-- Game Logic & Vertical 3D Braid Visualizer -->
+  <script>
+    let totalPlayers = 3;
+    let activePlayer = 1;
+
+    function initGame(num) {
+      totalPlayers = num;
+      document.getElementById('modal-overlay').style.display = 'none';
+
+      for (let i = 1; i <= 3; i++) {
+        const slot = document.getElementById(`player-slot-${i}`);
+        if (i > totalPlayers) {
+          slot.classList.add('disabled');
+        } else {
+          slot.classList.remove('disabled');
+        }
+      }
+
+      if (typeof initDeckSystem === 'function') initDeckSystem();
+      setActivePlayer(1);
+    }
+
+    function setActivePlayer(num) {
+      if (num > totalPlayers) return;
+      activePlayer = num;
+      for (let i = 1; i <= totalPlayers; i++) {
+        const slot = document.getElementById(`player-slot-${i}`);
+        if (i === num) {
+          slot.classList.add('active-turn');
+        } else {
+          slot.classList.remove('active-turn');
+        }
+      }
+    }
+
+    // D2 Coin Flip
+    let currentCoinRotation = 0;
+    function flipCoin() {
+      const coin = document.getElementById('coin');
+      const isH = Math.random() < 0.5;
+      const extraFlips = (Math.floor(Math.random() * 5) + 5) * 360; 
+      const targetAngle = isH ? 0 : 180;
+      
+      currentCoinRotation += extraFlips + targetAngle - (currentCoinRotation % 360);
+      coin.style.transform = `rotateY(${currentCoinRotation}deg)`;
+    }
+
+    /* -------------------------------------------------------------
+       VERTICAL 3D BRAID VISUALIZER (SECTION 4)
+    ------------------------------------------------------------- */
+    const STRAND_COLORS = [0x008b00, 0x1600ff, 0xfdff00, 0xff0000];
+    const STRAND_POSITIONS_X = [-2.25, -0.75, 0.75, 2.25];
+    const STEP_HEIGHT = 2.25; // Altezza costante per ogni passaggio/mossa
+    const DISC_Y_TOP = 4.5;
+
+    let braidWord = [];
+    let insertPosition = 'bottom';
+    let animatedProgress = 1.0;
+    let isAnimating = false;
+    let scrollOffset = 0; // Offset di scorrimento verticale della telecamera
+
+    const canvasContainer = document.getElementById('braid-canvas-container');
+    const sectionContainer = document.getElementById('section-4');
+    const braidScene = new THREE.Scene();
+
+    const braidCamera = new THREE.PerspectiveCamera(45, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 1000);
+    braidCamera.position.set(0, 0, 14);
+    braidCamera.lookAt(0, 0, 0);
+
+    const braidRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    braidRenderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
+    braidRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    canvasContainer.appendChild(braidRenderer.domElement);
+
+    // Illuminazione
+    braidScene.add(new THREE.AmbientLight(0xffffff, 1.2));
+
+    // Mesh dei fili della treccia
+    const strandMeshes = [];
+    for (let i = 0; i < 4; i++) {
+      const strandMat = new THREE.MeshStandardMaterial({
+        color: STRAND_COLORS[i],
+        roughness: 0.25,
+        metalness: 0.1
+      });
+      const strandMesh = new THREE.Mesh(new THREE.BufferGeometry(), strandMat);
+      braidScene.add(strandMesh);
+      strandMeshes.push(strandMesh);
+    }
+
+    // Calcola lo scorrimento massimo consentito (sbloccato solo per >= 4 mosse)
+    function getMaxScroll() {
+      const numSteps = braidWord.length;
+      return numSteps >= 4 ? (numSteps - 4) * STEP_HEIGHT : 0;
+    }
+
+    // Aggiorna la posizione verticale della telecamera in base allo scorrimento
+    function updateCameraScroll(targetScroll = null) {
+      const maxScroll = getMaxScroll();
+      if (targetScroll !== null) {
+        scrollOffset = targetScroll;
+      }
+      scrollOffset = Math.max(0, Math.min(maxScroll, scrollOffset));
+      
+      // La telecamera si sposta verso il basso per mostrare i passaggi inferiori
+      braidCamera.position.y = -scrollOffset;
+      braidCamera.lookAt(0, -scrollOffset, 0);
+
+      const scrollHint = document.getElementById('scroll-hint');
+      if (scrollHint) {
+        scrollHint.style.display = maxScroll > 0 ? 'block' : 'none';
+      }
+    }
+
+    // Calcolo delle curve per i fili della treccia
+    function computeStrandCurves(word, tAnim = 1.0) {
+      const numSteps = word.length;
+      const strandPaths = [[], [], [], []];
+      let currentPermutation = [0, 1, 2, 3];
+
+      // Lunghezza totale visiva: per meno di 4 mosse è 4 * STEP_HEIGHT, altrimenti cresce
+      const effectiveSteps = Math.max(4, numSteps);
+      const ySpan = effectiveSteps * STEP_HEIGHT;
+      const DISC_Y_BOTTOM = DISC_Y_TOP - ySpan;
+
+      for (let s = 0; s < 4; s++) {
+        strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], DISC_Y_TOP, 0));
+      }
+
+      if (numSteps === 0) {
+        for (let s = 0; s < 4; s++) {
+          strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], DISC_Y_BOTTOM, 0));
+        }
+      } else {
+        for (let stepIdx = 0; stepIdx < numSteps; stepIdx++) {
+          const gen = word[stepIdx];
+          const i = gen.index - 1;
+          const sign = gen.sign;
+
+          const yStart = DISC_Y_TOP - stepIdx * STEP_HEIGHT;
+          const yEnd = DISC_Y_TOP - (stepIdx + 1) * STEP_HEIGHT;
+
+          const isLastStep = (stepIdx === numSteps - 1);
+          const factor = isLastStep ? tAnim : 1.0;
+
+          const strandA = currentPermutation[i];
+          const strandB = currentPermutation[i + 1];
+
+          const xA = STRAND_POSITIONS_X[i];
+          const xB = STRAND_POSITIONS_X[i + 1];
+
+          const zDepth = 0.85 * sign;
+          const samples = 12;
+
+          for (let s = 1; s <= samples; s++) {
+            const frac = s / samples;
+            const y = THREE.MathUtils.lerp(yStart, yEnd, frac);
+
+            for (let pos = 0; pos < 4; pos++) {
+              if (pos !== i && pos !== i + 1) {
+                const st = currentPermutation[pos];
+                const x = STRAND_POSITIONS_X[pos];
+                strandPaths[st].push(new THREE.Vector3(x, y, 0));
+              }
+            }
+
+            const xCurrentA = THREE.MathUtils.lerp(xA, THREE.MathUtils.lerp(xA, xB, factor), frac);
+            const zCurrentA = Math.sin(frac * Math.PI) * zDepth * factor;
+            strandPaths[strandA].push(new THREE.Vector3(xCurrentA, y, zCurrentA));
+
+            const xCurrentB = THREE.MathUtils.lerp(xB, THREE.MathUtils.lerp(xB, xA, factor), frac);
+            const zCurrentB = -Math.sin(frac * Math.PI) * zDepth * factor;
+            strandPaths[strandB].push(new THREE.Vector3(xCurrentB, y, zCurrentB));
+          }
+
+          if (!isLastStep || tAnim >= 0.99) {
+            currentPermutation[i] = strandB;
+            currentPermutation[i + 1] = strandA;
+          }
+        }
+
+        // Estensione dei fili dritti fino al fondo per mantenere la struttura coerente
+        const finalY = DISC_Y_TOP - numSteps * STEP_HEIGHT;
+        if (finalY > DISC_Y_BOTTOM) {
+          for (let pos = 0; pos < 4; pos++) {
+            const st = currentPermutation[pos];
+            const x = STRAND_POSITIONS_X[pos];
+            strandPaths[st].push(new THREE.Vector3(x, DISC_Y_BOTTOM, 0));
+          }
+        }
+      }
+
+      return { strandPaths, currentPermutation };
+    }
+
+    function updateBraidGeometries() {
+      const { strandPaths } = computeStrandCurves(braidWord, animatedProgress);
+
+      for (let s = 0; s < 4; s++) {
+        const points = strandPaths[s];
+        const curve = new THREE.CatmullRomCurve3(points);
+        
+        if (strandMeshes[s].geometry) strandMeshes[s].geometry.dispose();
+        strandMeshes[s].geometry = new THREE.TubeGeometry(curve, points.length * 2, 0.14, 16, false);
+      }
+    }
+
+    // Gestione dello scorrimento (Mouse Wheel e Touch/Pointer Drag)
+    sectionContainer.addEventListener('wheel', (e) => {
+      const maxScroll = getMaxScroll();
+      if (maxScroll <= 0) return;
+      e.preventDefault();
+      scrollOffset += e.deltaY * 0.005;
+      updateCameraScroll();
+    }, { passive: false });
+
+    let isDragging = false;
+    let startY = 0;
+    let startScroll = 0;
+
+    sectionContainer.addEventListener('pointerdown', (e) => {
+      if (getMaxScroll() <= 0) return;
+      isDragging = true;
+      startY = e.clientY;
+      startScroll = scrollOffset;
+      sectionContainer.setPointerCapture(e.pointerId);
+    });
+
+    sectionContainer.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      const deltaY = e.clientY - startY;
+      scrollOffset = startScroll - deltaY * 0.015;
+      updateCameraScroll();
+    });
+
+    sectionContainer.addEventListener('pointerup', (e) => {
+      if (isDragging) {
+        isDragging = false;
+        try { sectionContainer.releasePointerCapture(e.pointerId); } catch(err){}
+      }
+    });
+
+    sectionContainer.addEventListener('pointercancel', () => { isDragging = false; });
+
+    // Seleziona posizione d'inserimento: Top / Bottom
+    function setInsertPosition(pos) {
+      insertPosition = pos;
+      document.getElementById('pos-top-btn').classList.toggle('active', pos === 'top');
+      document.getElementById('pos-bottom-btn').classList.toggle('active', pos === 'bottom');
+    }
+
+    function addGenerator(index, sign) {
+      if (isAnimating) return;
+      const gen = { index, sign };
+      if (insertPosition === 'top') {
+        braidWord.unshift(gen);
+        isAnimating = true;
+        animatedProgress = 0.0;
+        updateUI();
+        updateCameraScroll(0); // Torna in cima
+      } else {
+        braidWord.push(gen);
+        isAnimating = true;
+        animatedProgress = 0.0;
+        updateUI();
+        updateCameraScroll(getMaxScroll()); // Scorri automaticamente alla nuova mossa in basso
+      }
+    }
+
+    function undoGenerator() {
+      if (isAnimating || braidWord.length === 0) return;
+      if (insertPosition === 'top') {
+        braidWord.shift();
+      } else {
+        braidWord.pop();
+      }
+      isAnimating = true;
+      animatedProgress = 0.0;
+      updateUI();
+      updateCameraScroll();
+    }
+
+    function resetBraid() {
+      braidWord = [];
+      animatedProgress = 1.0;
+      isAnimating = false;
+      updateUI();
+      updateCameraScroll(0);
+      updateBraidGeometries();
+    }
+
+    function reduceBraidWord(word) {
+      let current = word.map(g => ({ ...g }));
+
+      function freeCancel(w) {
+        let res = w.map(g => ({ ...g }));
+        let changed = true;
+        while (changed) {
+          changed = false;
+          for (let i = 0; i < res.length; i++) {
+            for (let j = i + 1; j < res.length; j++) {
+              let canCommute = true;
+              for (let k = i + 1; k < j; k++) {
+                if (Math.abs(res[i].index - res[k].index) < 2) {
+                  canCommute = false;
+                  break;
+                }
+              }
+              if (canCommute && res[i].index === res[j].index && res[i].sign === -res[j].sign) {
+                res.splice(j, 1);
+                res.splice(i, 1);
+                changed = true;
+                break;
+              }
+            }
+            if (changed) break;
+          }
+        }
+        return res;
+      }
+
+      let changed = true;
+      let iterations = 0;
+      while (changed && iterations < 100) {
+        iterations++;
+        changed = false;
+
+        let cancelled = freeCancel(current);
+        if (cancelled.length < current.length) {
+          current = cancelled;
+          changed = true;
+          continue;
+        }
+
+        for (let i = 0; i <= current.length - 3; i++) {
+          const g1 = current[i], g2 = current[i+1], g3 = current[i+2];
+          if (g1.sign === g2.sign && g2.sign === g3.sign) {
+            if (g1.index === g3.index && Math.abs(g1.index - g2.index) === 1) {
+              let test = current.map(g => ({ ...g }));
+              test[i] = { index: g2.index, sign: g1.sign };
+              test[i+1] = { index: g1.index, sign: g1.sign };
+              test[i+2] = { index: g2.index, sign: g1.sign };
+
+              let testReduced = freeCancel(test);
+              if (testReduced.length < current.length) {
+                current = testReduced;
+                changed = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      return current;
+    }
+
+    function normalizeBraid() {
+      if (isAnimating) return;
+      const reduced = reduceBraidWord(braidWord);
+      if (reduced.length < braidWord.length) {
+        braidWord = reduced;
+        isAnimating = true;
+        animatedProgress = 0.0;
+        updateUI();
+        updateCameraScroll();
+      }
+    }
+
+    function updateUI() {
+      const labelEl = document.getElementById('braidLabel');
+      if (braidWord.length === 0) {
+        labelEl.innerText = "e";
+      } else {
+        labelEl.innerText = braidWord.map(g => `σ${g.index}${g.sign === -1 ? '⁻¹' : ''}`).join(' ');
+      }
+
+      document.getElementById('wordLengthVal').innerText = braidWord.length;
+
+      const { currentPermutation } = computeStrandCurves(braidWord, 1.0);
+      const visited = [false, false, false, false];
+      const cycles = [];
+
+      for (let s = 0; s < 4; s++) {
+        if (!visited[s]) {
+          let cycle = [];
+          let curr = s;
+          while (!visited[curr]) {
+            visited[curr] = true;
+            cycle.push(curr + 1);
+            curr = currentPermutation.indexOf(curr);
+          }
+          cycles.push(cycle);
+        }
+      }
+
+      document.getElementById('permutationVal').innerText = cycles.map(c => `(${c.join('')})`).join('');
+    }
+
+    let lastTime = performance.now();
+    function animateBraid(currentTime) {
+      requestAnimationFrame(animateBraid);
+
+      const deltaTime = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+
+      if (isAnimating) {
+        animatedProgress += deltaTime * 2.8;
+        if (animatedProgress >= 1.0) {
+          animatedProgress = 1.0;
+          isAnimating = false;
+        }
+        updateBraidGeometries();
+      }
+
+      braidRenderer.render(braidScene, braidCamera);
+    }
+
+    // Auto-Resize
+    window.addEventListener('resize', () => {
+      const w = canvasContainer.clientWidth;
+      const h = canvasContainer.clientHeight;
+      braidCamera.aspect = w / h;
+      braidCamera.updateProjectionMatrix();
+      braidRenderer.setSize(w, h);
+    });
+
+    // Inizializzazione
+    updateUI();
+    updateCameraScroll(0);
+    updateBraidGeometries();
+    animateBraid(performance.now());
+  </script>
+
+  <script>
+    const diceFaceMap = {
+      1: '\\sigma_1',
+      2: '\\sigma_1^{-1}',
+      3: '\\sigma_2',
+      4: '\\sigma_2^{-1}',
+      5: '\\sigma_3',
+      6: '\\sigma_3^{-1}'
+    };
+
+    function updateDiceResult(faceNumber) {
+      const labelEl = document.getElementById('dice-result-label');
+      const latexFormula = diceFaceMap[faceNumber] || '\\sigma_1';
+      labelEl.innerHTML = `$${latexFormula}$`;
+
+      if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise([labelEl]);
+      }
+    }
+  </script>
+</body>
+</html>
