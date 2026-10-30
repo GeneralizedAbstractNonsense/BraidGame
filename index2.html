@@ -612,45 +612,49 @@
       </div>
     </div>
 
-    <!-- Section 4: Vertical 3D Braid -->
-    <div class="section-4" id="section-4">
-      <div id="braid-canvas-container"></div>
+   <!-- Section 4: Vertical 3D Braid -->
+<div class="section-4" id="section-4">
+  <div id="braid-canvas-container"></div>
+  
+  <div class="braid-ui">
+    <div class="braid-controls">
       
-      <div class="braid-ui">
-        <div class="braid-header">
-          <span class="braid-title">B₄ Braid Group (3D)</span>
+
+      <div class="top-row">
+        <button id="pos-top-btn" class="pos-btn" onclick="setInsertPosition('top')" title="Top (Start)">T</button>
+        <div class="braid-word-box">
           <span class="braid-word" id="braidLabel">e</span>
         </div>
-
-        <div class="braid-controls">
-          <div class="pos-selector">
-            <span>Insertion Position:</span>
-            <button id="pos-top-btn" class="pos-btn" onclick="setInsertPosition('top')">Top (Start)</button>
-            <button id="pos-bottom-btn" class="pos-btn active" onclick="setInsertPosition('bottom')">Bottom (End)</button>
-          </div>
-
-          <div class="gen-row">
-            <button class="braid-gen-btn" onclick="addGenerator(1, 1)">σ₁</button>
-            <button class="braid-gen-btn inv" onclick="addGenerator(1, -1)">σ₁⁻¹</button>
-            <button class="braid-gen-btn" onclick="addGenerator(2, 1)">σ₂</button>
-            <button class="braid-gen-btn inv" onclick="addGenerator(2, -1)">σ₂⁻¹</button>
-            <button class="braid-gen-btn" onclick="addGenerator(3, 1)">σ₃</button>
-            <button class="braid-gen-btn inv" onclick="addGenerator(3, -1)">σ₃⁻¹</button>
-          </div>
-
-          <div class="action-row">
-            <button class="braid-act-btn" onclick="undoGenerator()">Undo</button>
-            <button class="braid-act-btn" onclick="normalizeBraid()">Simplify</button>
-            <button class="braid-act-btn danger" onclick="resetBraid()">Reset</button>
-          </div>
-
-          <div class="braid-info">
-            <span>Length: <b id="wordLengthVal">0</b></span>
-            <span>Permutation: <b id="permutationVal">(1)(2)(3)(4)</b></span>
-          </div>
-        </div>
+        <button id="pos-bottom-btn" class="pos-btn active" onclick="setInsertPosition('bottom')" title="Bottom (End)">B</button>
       </div>
+
+
+      <div class="info-row">
+        <div class="info-badge">Length: <b id="wordLengthVal">0</b></div>
+        <div class="info-badge">Perm: <b id="permutationVal">(1)(2)(3)(4)</b></div>
+      </div>
+
+  
+      <div class="gen-grid">
+        <button class="braid-gen-btn" onclick="addGenerator(1, 1)">σ₁</button>
+        <button class="braid-gen-btn" onclick="addGenerator(2, 1)">σ₂</button>
+        <button class="braid-gen-btn" onclick="addGenerator(3, 1)">σ₃</button>
+        
+        <button class="braid-gen-btn inv" onclick="addGenerator(1, -1)">σ₁⁻¹</button>
+        <button class="braid-gen-btn inv" onclick="addGenerator(2, -1)">σ₂⁻¹</button>
+        <button class="braid-gen-btn inv" onclick="addGenerator(3, -1)">σ₃⁻¹</button>
+      </div>
+
+    
+      <div class="action-row">
+        <button class="braid-act-btn" onclick="undoGenerator()">Undo</button>
+        <button class="braid-act-btn" onclick="normalizeBraid()">Simplify</button>
+        <button class="braid-act-btn danger" onclick="resetBraid()">Reset</button>
+      </div>
+
     </div>
+  </div>
+</div>
 
     <!-- Section 5: Draw Deck & Discard Pile -->
     <div class="section-5">
