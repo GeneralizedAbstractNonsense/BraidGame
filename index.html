@@ -236,6 +236,8 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      touch-action: none;
+      user-select: none;
     }
 
     #braid-canvas-container {
@@ -284,6 +286,21 @@
       font-weight: bold;
       color: #38bdf8;
       font-family: monospace;
+    }
+
+    .scroll-hint {
+      position: absolute;
+      top: 52px;
+      right: 14px;
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
     }
 
     .braid-controls {
@@ -442,15 +459,15 @@
     }
 
     .dice-result-label {
-  margin-top: 6px;
-  font-size: 18px;
-  font-weight: bold;
-  color: #38bdf8;
-  min-height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+      margin-top: 6px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #38bdf8;
+      min-height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
     .coin-wrapper { perspective: 1000px; }
 
@@ -482,87 +499,74 @@
 
     .coin-back { transform: rotateY(180deg); }
 
-    /* ==========================================
-   OPTIMIZATION FOR MOBILE DEVICES (< 768px)
-   ========================================== */
-@media (max-width: 768px) {
-  /* Permette lo scorrimento verticale della pagina */
-  body {
-    height: auto;
-    overflow-y: auto;
-  }
+    /* Mobile Optimization */
+    @media (max-width: 768px) {
+      body {
+        height: auto;
+        overflow-y: auto;
+      }
 
-  /* Trasforma la griglia a colonne in un layout verticale */
-  .game-board {
-    display: flex;
-    flex-direction: column;
-    height: auto;
-    padding: 8px;
-    gap: 16px;
-  }
+      .game-board {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        padding: 8px;
+        gap: 16px;
+      }
 
-  .left-panel, 
-  .section-4, 
-  .section-5, 
-  .section-6 {
-    width: 100%;
-  }
+      .left-panel, .section-4, .section-5, .section-6 {
+        width: 100%;
+      }
 
-  /* Sezione 4: Treccia 3D (necessita di altezza esplicita per il canvas WebGL) */
-  .section-4 {
-    height: 480px;
-    min-height: 450px;
-  }
+      .section-4 {
+        height: 480px;
+        min-height: 450px;
+      }
 
-  /* Ottimizzazione dei pulsanti per il touch */
-  .braid-controls {
-    padding: 8px;
-    gap: 6px;
-  }
+      .braid-controls {
+        padding: 8px;
+        gap: 6px;
+      }
 
-  .braid-gen-btn {
-    padding: 8px 12px;
-    font-size: 14px;
-    min-width: 44px; /* Dimensione minima raccomandata per touch */
-  }
+      .braid-gen-btn {
+        padding: 8px 12px;
+        font-size: 14px;
+        min-width: 44px;
+      }
 
-  .pos-selector {
-    flex-wrap: wrap;
-  }
+      .pos-selector {
+        flex-wrap: wrap;
+      }
 
-  /* Carte nelle mani dei giocatori */
-  .hand-container {
-    min-height: 100px;
-  }
+      .hand-container {
+        min-height: 100px;
+      }
 
-  .card, .card-deck, .card-placeholder {
-    width: 65px;
-    height: 90px;
-  }
+      .card, .card-deck, .card-placeholder {
+        width: 65px;
+        height: 90px;
+      }
 
-  /* Modal Selezione Giocatori */
-  .modal {
-    width: 90%;
-    max-width: 360px;
-    padding: 20px 15px;
-  }
+      .modal {
+        width: 90%;
+        max-width: 360px;
+        padding: 20px 15px;
+      }
 
-  .btn-group {
-    flex-direction: column;
-    gap: 10px;
-  }
+      .btn-group {
+        flex-direction: column;
+        gap: 10px;
+      }
 
-  .btn-player {
-    width: 100%;
-    padding: 14px;
-  }
-}
-    
+      .btn-player {
+        width: 100%;
+        padding: 14px;
+      }
+    }
   </style>
 
-  <!-- Three.js & OrbitControls -->
+  <!-- Three.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
@@ -616,6 +620,10 @@
         <div class="braid-header">
           <span class="braid-title">B₄ Braid Group (3D)</span>
           <span class="braid-word" id="braidLabel">e</span>
+        </div>
+
+        <div id="scroll-hint" class="scroll-hint" style="display: none;">
+          ↕ Scroll up and down
         </div>
 
         <div class="braid-controls">
@@ -707,7 +715,7 @@
         }
       }
 
-      initDeckSystem();
+      if (typeof initDeckSystem === 'function') initDeckSystem();
       setActivePlayer(1);
     }
 
@@ -739,40 +747,36 @@
     /* -------------------------------------------------------------
        VERTICAL 3D BRAID VISUALIZER (SECTION 4)
     ------------------------------------------------------------- */
-    // Exact requested colors:
-    // Strand 1: Green RGB(0, 139, 0) -> 0x008b00
-    // Strand 2: Blue RGB(22, 0, 255) -> 0x1600ff
-    // Strand 3: Yellow RGB(253, 255, 0) -> 0xfdff00
-    // Strand 4: Red RGB(255, 0, 0) -> 0xff0000
     const STRAND_COLORS = [0x008b00, 0x1600ff, 0xfdff00, 0xff0000];
     const STRAND_POSITIONS_X = [-2.25, -0.75, 0.75, 2.25];
+    const STEP_HEIGHT = 2.25; // Altezza per mossa
+    const EXTENSION_LENGTH = 100; // Estensione infinita per fili dritti
     const DISC_Y_TOP = 4.5;
-    const DISC_Y_BOTTOM = -4.5;
 
     let braidWord = [];
-    let insertPosition = 'bottom'; // 'top' for start, 'bottom' for end
+    let insertPosition = 'bottom';
     let animatedProgress = 1.0;
     let isAnimating = false;
+    let scrollOffset = 0;
 
     const canvasContainer = document.getElementById('braid-canvas-container');
+    const sectionContainer = document.getElementById('section-4');
     const braidScene = new THREE.Scene();
 
-    const braidCamera = new THREE.PerspectiveCamera(45, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 1000);
+    // Far plane esteso a 2000 per visualizzare i fili infiniti
+    const braidCamera = new THREE.PerspectiveCamera(45, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 2000);
     braidCamera.position.set(0, 0, 14);
+    braidCamera.lookAt(0, 0, 0);
 
     const braidRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     braidRenderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
     braidRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     canvasContainer.appendChild(braidRenderer.domElement);
 
-    const braidControls = new THREE.OrbitControls(braidCamera, braidRenderer.domElement);
-    braidControls.enableDamping = true;
-    braidControls.dampingFactor = 0.05;
-
-    // Soft Ambient Lighting (Discs and Directional Lights removed)
+    // Illuminazione
     braidScene.add(new THREE.AmbientLight(0xffffff, 1.2));
 
-    // Strand Meshes
+    // Mesh dei fili della treccia
     const strandMeshes = [];
     for (let i = 0; i < 4; i++) {
       const strandMat = new THREE.MeshStandardMaterial({
@@ -785,21 +789,50 @@
       strandMeshes.push(strandMesh);
     }
 
-    // Compute Vertical Braid Curve Paths
+    // Scorrimento massimo consentito (sbloccato da >= 4 mosse)
+    function getMaxScroll() {
+      const numSteps = braidWord.length;
+      return numSteps >= 4 ? (numSteps - 4) * STEP_HEIGHT : 0;
+    }
+
+    function updateCameraScroll(targetScroll = null) {
+      const maxScroll = getMaxScroll();
+      if (targetScroll !== null) {
+        scrollOffset = targetScroll;
+      }
+      scrollOffset = Math.max(0, Math.min(maxScroll, scrollOffset));
+      
+      braidCamera.position.y = -scrollOffset;
+      braidCamera.lookAt(0, -scrollOffset, 0);
+
+      const scrollHint = document.getElementById('scroll-hint');
+      if (scrollHint) {
+        scrollHint.style.display = maxScroll > 0 ? 'block' : 'none';
+      }
+    }
+
+    // Calcolo delle curve trasversali infinite per la treccia
     function computeStrandCurves(word, tAnim = 1.0) {
       const numSteps = word.length;
       const strandPaths = [[], [], [], []];
       let currentPermutation = [0, 1, 2, 3];
 
-      const ySpan = DISC_Y_TOP - DISC_Y_BOTTOM;
+      const topY = DISC_Y_TOP;
+      const topExtensionY = topY + EXTENSION_LENGTH;
 
+      // 1. Estensione infinita verso l'alto
       for (let s = 0; s < 4; s++) {
-        strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], DISC_Y_TOP, 0));
+        strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], topExtensionY, 0));
+        strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], topY, 0));
       }
 
+      // 2. Intrecci centrali
       if (numSteps === 0) {
+        const bottomY = topY - 4 * STEP_HEIGHT;
+        const bottomExtensionY = bottomY - EXTENSION_LENGTH;
         for (let s = 0; s < 4; s++) {
-          strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], DISC_Y_BOTTOM, 0));
+          strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], bottomY, 0));
+          strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], bottomExtensionY, 0));
         }
       } else {
         for (let stepIdx = 0; stepIdx < numSteps; stepIdx++) {
@@ -807,8 +840,8 @@
           const i = gen.index - 1;
           const sign = gen.sign;
 
-          const yStart = DISC_Y_TOP - (stepIdx / numSteps) * ySpan;
-          const yEnd = DISC_Y_TOP - ((stepIdx + 1) / numSteps) * ySpan;
+          const yStart = topY - stepIdx * STEP_HEIGHT;
+          const yEnd = topY - (stepIdx + 1) * STEP_HEIGHT;
 
           const isLastStep = (stepIdx === numSteps - 1);
           const factor = isLastStep ? tAnim : 1.0;
@@ -848,6 +881,15 @@
             currentPermutation[i + 1] = strandA;
           }
         }
+
+        // 3. Estensione infinita verso il basso
+        const finalY = topY - numSteps * STEP_HEIGHT;
+        const bottomExtensionY = finalY - EXTENSION_LENGTH;
+        for (let pos = 0; pos < 4; pos++) {
+          const st = currentPermutation[pos];
+          const x = STRAND_POSITIONS_X[pos];
+          strandPaths[st].push(new THREE.Vector3(x, bottomExtensionY, 0));
+        }
       }
 
       return { strandPaths, currentPermutation };
@@ -865,7 +907,43 @@
       }
     }
 
-    // Set Insertion Position: Top / Bottom
+    // Gestione dello scorrimento (Mouse Wheel e Touch/Pointer Drag)
+    sectionContainer.addEventListener('wheel', (e) => {
+      const maxScroll = getMaxScroll();
+      if (maxScroll <= 0) return;
+      e.preventDefault();
+      scrollOffset += e.deltaY * 0.005;
+      updateCameraScroll();
+    }, { passive: false });
+
+    let isDragging = false;
+    let startY = 0;
+    let startScroll = 0;
+
+    sectionContainer.addEventListener('pointerdown', (e) => {
+      if (getMaxScroll() <= 0) return;
+      isDragging = true;
+      startY = e.clientY;
+      startScroll = scrollOffset;
+      sectionContainer.setPointerCapture(e.pointerId);
+    });
+
+    sectionContainer.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      const deltaY = e.clientY - startY;
+      scrollOffset = startScroll - deltaY * 0.015;
+      updateCameraScroll();
+    });
+
+    sectionContainer.addEventListener('pointerup', (e) => {
+      if (isDragging) {
+        isDragging = false;
+        try { sectionContainer.releasePointerCapture(e.pointerId); } catch(err){}
+      }
+    });
+
+    sectionContainer.addEventListener('pointercancel', () => { isDragging = false; });
+
     function setInsertPosition(pos) {
       insertPosition = pos;
       document.getElementById('pos-top-btn').classList.toggle('active', pos === 'top');
@@ -876,13 +954,18 @@
       if (isAnimating) return;
       const gen = { index, sign };
       if (insertPosition === 'top') {
-        braidWord.unshift(gen); // Insert at top
+        braidWord.unshift(gen);
+        isAnimating = true;
+        animatedProgress = 0.0;
+        updateUI();
+        updateCameraScroll(0);
       } else {
-        braidWord.push(gen); // Insert at bottom
+        braidWord.push(gen);
+        isAnimating = true;
+        animatedProgress = 0.0;
+        updateUI();
+        updateCameraScroll(getMaxScroll());
       }
-      isAnimating = true;
-      animatedProgress = 0.0;
-      updateUI();
     }
 
     function undoGenerator() {
@@ -895,6 +978,7 @@
       isAnimating = true;
       animatedProgress = 0.0;
       updateUI();
+      updateCameraScroll();
     }
 
     function resetBraid() {
@@ -902,6 +986,7 @@
       animatedProgress = 1.0;
       isAnimating = false;
       updateUI();
+      updateCameraScroll(0);
       updateBraidGeometries();
     }
 
@@ -978,6 +1063,7 @@
         isAnimating = true;
         animatedProgress = 0.0;
         updateUI();
+        updateCameraScroll();
       }
     }
 
@@ -1027,11 +1113,10 @@
         updateBraidGeometries();
       }
 
-      braidControls.update();
       braidRenderer.render(braidScene, braidCamera);
     }
 
-    // Grid Auto-Resize Handler
+    // Auto-Resize
     window.addEventListener('resize', () => {
       const w = canvasContainer.clientWidth;
       const h = canvasContainer.clientHeight;
@@ -1040,32 +1125,32 @@
       braidRenderer.setSize(w, h);
     });
 
-    // Initialize Visualizer
+    // Inizializzazione
     updateUI();
+    updateCameraScroll(0);
     updateBraidGeometries();
     animateBraid(performance.now());
   </script>
+
   <script>
-const diceFaceMap = {
-  1: '\\sigma_1',
-  2: '\\sigma_1^{-1}',
-  3: '\\sigma_2',
-  4: '\\sigma_2^{-1}',
-  5: '\\sigma_3',
-  6: '\\sigma_3^{-1}'
-};
+    const diceFaceMap = {
+      1: '\\sigma_1',
+      2: '\\sigma_1^{-1}',
+      3: '\\sigma_2',
+      4: '\\sigma_2^{-1}',
+      5: '\\sigma_3',
+      6: '\\sigma_3^{-1}'
+    };
 
+    function updateDiceResult(faceNumber) {
+      const labelEl = document.getElementById('dice-result-label');
+      const latexFormula = diceFaceMap[faceNumber] || '\\sigma_1';
+      labelEl.innerHTML = `$${latexFormula}$`;
 
-function updateDiceResult(faceNumber) {
-  const labelEl = document.getElementById('dice-result-label');
-  const latexFormula = diceFaceMap[faceNumber] || '\\sigma_1';
-  
-
-  labelEl.innerHTML = `$${latexFormula}$`;
-
-  if (window.MathJax && MathJax.typesetPromise) {
-    MathJax.typesetPromise([labelEl]);
-  }
-}</script>
+      if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise([labelEl]);
+      }
+    }
+  </script>
 </body>
 </html>
