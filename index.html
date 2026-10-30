@@ -622,10 +622,6 @@
           <span class="braid-word" id="braidLabel">e</span>
         </div>
 
-        <div id="scroll-hint" class="scroll-hint" style="display: none;">
-          ↕ Scroll up and down
-        </div>
-
         <div class="braid-controls">
           <div class="pos-selector">
             <span>Insertion Position:</span>
@@ -749,21 +745,23 @@
     ------------------------------------------------------------- */
     const STRAND_COLORS = [0x008b00, 0x1600ff, 0xfdff00, 0xff0000];
     const STRAND_POSITIONS_X = [-2.25, -0.75, 0.75, 2.25];
-    const STEP_HEIGHT = 2.25; // Altezza per mossa
-    const EXTENSION_LENGTH = 100; // Estensione infinita per fili dritti
+    const STEP_HEIGHT = 2.25; 
+    const EXTENSION_LENGTH = 100;
     const DISC_Y_TOP = 4.5;
 
     let braidWord = [];
     let insertPosition = 'bottom';
     let animatedProgress = 1.0;
     let isAnimating = false;
+    
+    // Variabili per lo scorrimento fluido della telecamera
     let scrollOffset = 0;
+    let targetScrollOffset = 0;
 
     const canvasContainer = document.getElementById('braid-canvas-container');
     const sectionContainer = document.getElementById('section-4');
     const braidScene = new THREE.Scene();
 
-    // Far plane esteso a 2000 per visualizzare i fili infiniti
     const braidCamera = new THREE.PerspectiveCamera(45, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 2000);
     braidCamera.position.set(0, 0, 14);
     braidCamera.lookAt(0, 0, 0);
@@ -773,10 +771,8 @@
     braidRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     canvasContainer.appendChild(braidRenderer.domElement);
 
-    // Illuminazione
     braidScene.add(new THREE.AmbientLight(0xffffff, 1.2));
 
-    // Mesh dei fili della treccia
     const strandMeshes = [];
     for (let i = 0; i < 4; i++) {
       const strandMat = new THREE.MeshStandardMaterial({
@@ -789,18 +785,16 @@
       strandMeshes.push(strandMesh);
     }
 
-    // Scorrimento massimo consentito (sbloccato da >= 4 mosse)
+    // Calcola lo scorrimento massimo considerando l'altezza dei comandi inferiori
     function getMaxScroll() {
       const numSteps = braidWord.length;
-      return numSteps >= 4 ? (numSteps - 4) * STEP_HEIGHT : 0;
+      // Il margine (-2.2) permette di visualizzare l'ultima mossa sopra il pannello dei controlli
+      return numSteps >= 3 ? (numSteps - 2.2) * STEP_HEIGHT : 0;
     }
 
-    function updateCameraScroll(targetScroll = null) {
+    function updateCameraScroll() {
       const maxScroll = getMaxScroll();
-      if (targetScroll !== null) {
-        scrollOffset = targetScroll;
-      }
-      scrollOffset = Math.max(0, Math.min(maxScroll, scrollOffset));
+      targetScrollOffset = Math.max(0, Math.min(maxScroll, targetScrollOffset));
       
       braidCamera.position.y = -scrollOffset;
       braidCamera.lookAt(0, -scrollOffset, 0);
@@ -811,7 +805,15 @@
       }
     }
 
-    // Calcolo delle curve trasversali infinite per la treccia
+    // Centra e focalizza automaticamente l'ultima mossa applicata
+    function autoFocusLastMove() {
+      if (insertPosition === 'top') {
+        targetScrollOffset = 0;
+      } else {
+        targetScrollOffset = getMaxScroll();
+      }
+    }
+
     function computeStrandCurves(word, tAnim = 1.0) {
       const numSteps = word.length;
       const strandPaths = [[], [], [], []];
@@ -820,13 +822,11 @@
       const topY = DISC_Y_TOP;
       const topExtensionY = topY + EXTENSION_LENGTH;
 
-      // 1. Estensione infinita verso l'alto
       for (let s = 0; s < 4; s++) {
         strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], topExtensionY, 0));
         strandPaths[s].push(new THREE.Vector3(STRAND_POSITIONS_X[s], topY, 0));
       }
 
-      // 2. Intrecci centrali
       if (numSteps === 0) {
         const bottomY = topY - 4 * STEP_HEIGHT;
         const bottomExtensionY = bottomY - EXTENSION_LENGTH;
@@ -882,7 +882,6 @@
           }
         }
 
-        // 3. Estensione infinita verso il basso
         const finalY = topY - numSteps * STEP_HEIGHT;
         const bottomExtensionY = finalY - EXTENSION_LENGTH;
         for (let pos = 0; pos < 4; pos++) {
@@ -907,13 +906,13 @@
       }
     }
 
-    // Gestione dello scorrimento (Mouse Wheel e Touch/Pointer Drag)
+    // Gestione dello scorrimento manuale
     sectionContainer.addEventListener('wheel', (e) => {
       const maxScroll = getMaxScroll();
       if (maxScroll <= 0) return;
       e.preventDefault();
-      scrollOffset += e.deltaY * 0.005;
-      updateCameraScroll();
+      targetScrollOffset += e.deltaY * 0.005;
+      targetScrollOffset = Math.max(0, Math.min(maxScroll, targetScrollOffset));
     }, { passive: false });
 
     let isDragging = false;
@@ -924,15 +923,15 @@
       if (getMaxScroll() <= 0) return;
       isDragging = true;
       startY = e.clientY;
-      startScroll = scrollOffset;
+      startScroll = targetScrollOffset;
       sectionContainer.setPointerCapture(e.pointerId);
     });
 
     sectionContainer.addEventListener('pointermove', (e) => {
       if (!isDragging) return;
       const deltaY = e.clientY - startY;
-      scrollOffset = startScroll - deltaY * 0.015;
-      updateCameraScroll();
+      targetScrollOffset = startScroll - deltaY * 0.015;
+      targetScrollOffset = Math.max(0, Math.min(getMaxScroll(), targetScrollOffset));
     });
 
     sectionContainer.addEventListener('pointerup', (e) => {
@@ -948,6 +947,7 @@
       insertPosition = pos;
       document.getElementById('pos-top-btn').classList.toggle('active', pos === 'top');
       document.getElementById('pos-bottom-btn').classList.toggle('active', pos === 'bottom');
+      autoFocusLastMove();
     }
 
     function addGenerator(index, sign) {
@@ -955,17 +955,13 @@
       const gen = { index, sign };
       if (insertPosition === 'top') {
         braidWord.unshift(gen);
-        isAnimating = true;
-        animatedProgress = 0.0;
-        updateUI();
-        updateCameraScroll(0);
       } else {
         braidWord.push(gen);
-        isAnimating = true;
-        animatedProgress = 0.0;
-        updateUI();
-        updateCameraScroll(getMaxScroll());
       }
+      isAnimating = true;
+      animatedProgress = 0.0;
+      updateUI();
+      autoFocusLastMove();
     }
 
     function undoGenerator() {
@@ -978,15 +974,17 @@
       isAnimating = true;
       animatedProgress = 0.0;
       updateUI();
-      updateCameraScroll();
+      autoFocusLastMove();
     }
 
     function resetBraid() {
       braidWord = [];
       animatedProgress = 1.0;
       isAnimating = false;
+      targetScrollOffset = 0;
+      scrollOffset = 0;
       updateUI();
-      updateCameraScroll(0);
+      updateCameraScroll();
       updateBraidGeometries();
     }
 
@@ -1063,7 +1061,7 @@
         isAnimating = true;
         animatedProgress = 0.0;
         updateUI();
-        updateCameraScroll();
+        autoFocusLastMove();
       }
     }
 
@@ -1104,6 +1102,15 @@
       const deltaTime = (currentTime - lastTime) / 1000;
       lastTime = currentTime;
 
+      // Interpolazione fluida per lo scorrimento della telecamera
+      if (Math.abs(scrollOffset - targetScrollOffset) > 0.001) {
+        scrollOffset += (targetScrollOffset - scrollOffset) * 0.12;
+        updateCameraScroll();
+      } else {
+        scrollOffset = targetScrollOffset;
+        updateCameraScroll();
+      }
+
       if (isAnimating) {
         animatedProgress += deltaTime * 2.8;
         if (animatedProgress >= 1.0) {
@@ -1127,7 +1134,7 @@
 
     // Inizializzazione
     updateUI();
-    updateCameraScroll(0);
+    autoFocusLastMove();
     updateBraidGeometries();
     animateBraid(performance.now());
   </script>
