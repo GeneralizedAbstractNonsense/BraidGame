@@ -18,9 +18,9 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: center;
-      padding: 20px;
+      padding: 40px 20px 20px 20px;
       position: relative;
     }
 
@@ -29,64 +29,94 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 32px;
+      justify-content: flex-start;
+      gap: 40px;
       width: 100%;
-      max-width: 700px;
+      max-width: 800px;
       text-align: center;
+      margin-top: 2vh; /* Posiziona il logo più in alto */
     }
 
-    /* Centered Logo */
+    /* Centered & Enlarged Logo */
     .logo-container img {
-      max-width: 280px;
+      max-width: 420px; /* Logo più grande */
       width: 100%;
       height: auto;
       display: block;
       margin: 0 auto;
       user-select: none;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
     }
 
-    /* Horizontal Buttons */
+    /* Horizontal Buttons Container */
     .nav-buttons {
       display: flex;
       flex-direction: row;
-      gap: 16px;
+      gap: 20px;
       justify-content: center;
       align-items: center;
       width: 100%;
+      flex-wrap: wrap;
     }
 
+    /* Pencil / Hand-drawn Style Button */
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 10px 24px;
-      font-size: 15px;
-      font-weight: 600;
-      color: #334155;
+      gap: 10px;
+      padding: 12px 26px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e293b;
       background-color: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
+      /* Bordo irregolare stile disegno a mano libera */
+      border: 2.5px solid #1e293b;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
       text-decoration: none;
       cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      min-width: 110px;
+      /* Ombra schizzata / trattino */
+      box-shadow: 3px 4px 0px #1e293b;
+      transition: all 0.2s ease-in-out;
+      min-width: 130px;
+      user-select: none;
     }
 
     .btn:hover {
-      background-color: #2563eb;
-      color: #ffffff;
-      border-color: #2563eb;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+      background-color: #f8fafc;
+      transform: scale(1.04) rotate(-1deg);
+      box-shadow: 5px 6px 0px #1e293b;
+      color: #0284c7;
+      border-color: #0284c7;
+    }
+
+    .btn:hover svg {
+      stroke: #0284c7;
+      fill: #0284c7;
     }
 
     .btn:active {
-      transform: translateY(0);
+      transform: translate(2px, 2px);
+      box-shadow: 1px 2px 0px #1e293b;
     }
 
-  
+    /* SVG Icon Style */
+    .btn-icon {
+      width: 18px;
+      height: 18px;
+      stroke: #1e293b;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-icon.filled {
+      fill: #1e293b;
+    }
+
+    /* Tutorial Overlay Modal */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -113,10 +143,12 @@
     .modal-card {
       background: #ffffff;
       padding: 32px;
-      border-radius: 12px;
+      /* Stile matita anche per il modal */
+      border: 2.5px solid #1e293b;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      box-shadow: 6px 8px 0px #1e293b;
       max-width: 480px;
       width: 100%;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
       text-align: left;
       transform: translateY(12px);
       transition: transform 0.25s ease;
@@ -127,7 +159,7 @@
     }
 
     .modal-card h2 {
-      font-size: 20px;
+      font-size: 22px;
       margin-bottom: 12px;
       color: #0f172a;
     }
@@ -142,23 +174,25 @@
     .modal-close-btn {
       display: block;
       margin-left: auto;
-      padding: 8px 18px;
-      font-size: 13px;
-      font-weight: 600;
-      background: #f1f5f9;
-      color: #334155;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
+      padding: 8px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      background: #ffffff;
+      color: #1e293b;
+      border: 2px solid #1e293b;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      box-shadow: 2px 3px 0px #1e293b;
       cursor: pointer;
-      transition: background 0.2s ease;
+      transition: all 0.2s ease;
     }
 
     .modal-close-btn:hover {
-      background: #e2e8f0;
-      color: #0f172a;
+      background: #f1f5f9;
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 4px 0px #1e293b;
     }
 
-   
+    /* Clickable Footer in Bottom-Right */
     footer {
       position: absolute;
       bottom: 16px;
@@ -180,6 +214,19 @@
 
     /* Mobile Responsiveness */
     @media (max-width: 600px) {
+      body {
+        padding-top: 20px;
+      }
+
+      .main-container {
+        margin-top: 0;
+        gap: 30px;
+      }
+
+      .logo-container img {
+        max-width: 300px;
+      }
+
       .nav-buttons {
         flex-direction: column;
         width: 100%;
@@ -192,7 +239,7 @@
 
       footer {
         position: static;
-        margin-top: 40px;
+        margin-top: 50px;
         text-align: center;
       }
     }
@@ -201,17 +248,39 @@
 <body>
 
   <main class="main-container">
-    <!-- Center Logo -->
+    <!-- Center Logo (media/logo.png) -->
     <div class="logo-container">
-      <!-- Sostituisci "logo.png" con il percorso o nome corretto della tua immagine -->
       <img src="media/logo.png" alt="Braid Game Logo">
     </div>
 
     <!-- Navigation Buttons -->
     <nav class="nav-buttons">
-      <button class="btn" onclick="openTutorial()">Tutorial</button>
-      <a href="game.html" class="btn">Play</a>
-      <a href="braids.html" class="btn">Theory</a>
+      <!-- 1. Tutorial Button with Info Icon -->
+      <button class="btn" onclick="openTutorial()">
+        <svg class="btn-icon" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9"></circle>
+          <line x1="12" y1="17" x2="12" y2="11"></line>
+          <line x1="12" y1="7" x2="12.01" y2="7"></line>
+        </svg>
+        <span>Tutorial</span>
+      </button>
+
+      <!-- 2. Play Button with Classic Play Triangle -->
+      <a href="game.html" class="btn">
+        <svg class="btn-icon filled" viewBox="0 0 24 24">
+          <polygon points="6,4 20,12 6,20"></polygon>
+        </svg>
+        <span>Play</span>
+      </a>
+
+      <!-- 3. Theory Button with Book/Theory Icon -->
+      <a href="braids.html" class="btn">
+        <svg class="btn-icon" viewBox="0 0 24 24">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        <span>Theory</span>
+      </a>
     </nav>
   </main>
 
